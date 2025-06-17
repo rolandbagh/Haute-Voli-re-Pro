@@ -410,36 +410,5 @@
         initializeApp();
     });
     </script>
-<!-- Chart.js library -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<script>
-  // 🟢 Pigeon Status Chart
-  const ctxStatus = document.getElementById('pigeonStatusChart').getContext('2d');
-  new Chart(ctxStatus, {
-    type: 'doughnut',
-    data: {
-      labels: ['Active', 'Inactive', 'Deceased'],
-      datasets: [{
-        data: [12, 5, 2], // Replace with your actual pigeon stats
-        backgroundColor: ['#4CAF50', '#FFC107', '#F44336']
-      }]
-    }
-  });
-
-  // 🔵 Monthly Hatches Chart
-  const ctxHatches = document.getElementById('monthlyHatchesChart').getContext('2d');
-  new Chart(ctxHatches, {
-    type: 'bar',
-    data: {
-      labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-      datasets: [{
-        label: 'Hatches',
-        data: [3, 5, 2, 4, 6, 1], // Replace with your actual hatch data
-        backgroundColor: '#2196F3'
-      }]
-    }
-  });
-</script>
 </body>
 </html>
