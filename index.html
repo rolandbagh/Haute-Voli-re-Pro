@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="A comprehensive web application for managing pigeon lofts, including pigeon inventory, breeding pairs, and health records.">
+    <title>Haute Volière Pro</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f5f5f5; color: #333; }
+        .app-container { display: flex; flex-direction: column; min-height: 100vh; }
+        header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1rem 2rem; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        header h1 { font-size: 2rem; font-weight: 300; }
+        nav ul { display: flex; list-style: none; padding: 0; margin: 0; overflow-x: auto; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        nav li { padding: 1rem 1.5rem; cursor: pointer; transition: all 0.3s ease; white-space: nowrap; border-bottom: 3px solid transparent; }
+        nav li:hover { background-color: #f8f9fa; }
+        nav li[aria-selected="true"] { background-color: #e3f2fd; border-bottom-color: #667eea; color: #667eea; font-weight: 600; }
+        nav li i { margin-right: 8px; }
+        main { flex: 1; padding: 2rem; }
+        .view { display: none; }
+        .view.active { display: block; }
+        .controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
+        .primary-btn, .secondary-btn, .danger-btn { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 8px; }
+        .primary-btn { background-color: #667eea; color: white; }
+        .secondary-btn { background-color: #6c757d; color: white; }
+        .danger-btn { background-color: #dc3545; color: white; }
+        .search-container { position: relative; }
+        .search-container input { padding: 10px 40px 10px 15px; border: 1px solid #ddd; border-radius: 25px; width: 300px; font-size: 14px; }
+        .search-container i { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: #666; }
+        table { width: 100%; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1); border-collapse: collapse; }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background-color: #f8f9fa; font-weight: 600; color: #495057; }
+        tr:hover { background-color: #f8f9fa; }
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); align-items: center; justify-content: center; }
+        .modal.is-open { display: flex; }
+        .modal-content { background-color: white; padding: 2rem; border-radius: 10px; width: 90%; max-width: 800px; max-height: 90vh; overflow-y: auto; position: relative; }
+        .close-modal { position: absolute; right: 1rem; top: 1rem; font-size: 24px; cursor: pointer; color: #666; }
+        .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
+        .form-group { display: flex; flex-direction: column; }
+        .form-group label { margin-bottom: 5px; font-weight: 500; color: #495057; }
+        .form-group input, .form-group select, .form-group textarea { padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2); }
+        .form-buttons { display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem; }
+        .form-section-header { width: 100%; padding-bottom: 8px; margin-top: 15px; margin-bottom: 10px; border-bottom: 1px solid #e0e0e0; font-size: 1.1em; color: #333; }
+        .readonly-input { background-color: #f8f9fa !important; color: #6c757d !important; }
+        .report-options, .dashboard-charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 2rem; margin-top: 2rem; }
+        .report-card, .chart-container { background: white; padding: 2rem; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .report-card { text-align: center; }
+        .report-card i { font-size: 3rem; color: #667eea; margin-bottom: 1rem; }
+        .report-card h3, .chart-container h3 { margin-bottom: 1.5rem; text-align: center; color: #333; font-weight: 500; }
+        .report-card p { color: #666; margin-bottom: 1.5rem; }
+        .settings-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 2rem; }
+        .settings-section { background: white; padding: 2rem; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .settings-section h3 { margin-bottom: 1.5rem; color: #333; }
+        .message-container { position: fixed; top: 20px; right: 20px; z-index: 2000; display: flex; flex-direction: column; gap: 10px; }
+        .message { padding: 15px 20px; border-radius: 5px; border-left-width: 5px; border-left-style: solid; box-shadow: 0 2px 10px rgba(0,0,0,0.1); opacity: 0; transform: translateX(100%); animation: slideIn 0.5s forwards; }
+        @keyframes slideIn { to { opacity: 1; transform: translateX(0); } }
+        .success-message { background-color: #d4edda; color: #155724; border-left-color: #28a745; }
+        .error-message { background-color: #f8d7da; color: #721c24; border-left-color: #dc3545; }
+        .status-badge { padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600; text-transform: capitalize; }
+        .status-active { background-color: #d4edda; color: #14532d; } .status-breeding { background-color: #fff3cd; color: #664d03; } .status-sold { background-color: #f8d7da; color: #721c24; } .status-deceased { background-color: #e2e3e5; color: #383d41; } .status-paired { background-color: #d1ecf1; color: #08424e; } .status-laying { background-color: #fff3cd; color: #664d03; } .status-incubating { background-color: #ffeaa7; color: #5849be; } .status-feeding { background-color: #fde2e4; color: #900c3f; } .status-inactive { background-color: #e2e3e5; color: #383d41; }
+        .dashboard-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .stat-card { background: white; padding: 1.5rem; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); text-align: center; }
+        .stat-card i { font-size: 2rem; color: #667eea; margin-bottom: .75rem; }
+        .stat-card .stat-number { font-size: 2.5rem; font-weight: 600; color: #333; }
+        .stat-card .stat-title { font-size: .9rem; color: #666; }
+        
+        @media print {
+            body * { visibility: hidden; }
+            #report-modal .modal-content, #report-modal .modal-content * { visibility: visible; }
+            #report-modal { position: absolute; left: 0; top: 0; }
+            #report-modal .modal-content { max-width: 100%; box-shadow: none; border: 1px solid #ccc; }
+            #report-modal .form-buttons, #report-modal .close-modal { display: none; }
+        }
+        #report-content h3 { margin-bottom: 1rem; border-bottom: 1px solid #eee; padding-bottom: .5rem; }
+        #report-content h4 { margin-top: 1.5rem; margin-bottom: .5rem; }
+        #report-content table { box-shadow: none; border: 1px solid #ddd; }
+        @media (max-width: 768px) {
+            main { padding: 1rem; }
+            .search-container input { width: 200px; }
+            .modal-content { margin: 5% auto; padding: 1.5rem; }
+            .form-row { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header><h1><i class="fas fa-dove"></i> Haute Volière Pro</h1></header>
+        <nav>
+            <ul role="tablist">
+                <li role="tab" aria-selected="true" data-view="dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</li>
+                <li role="tab" aria-selected="false" data-view="pigeons"><i class="fas fa-dove"></i> Pigeons</li>
+                <li role="tab" aria-selected="false" data-view="breeding"><i class="fas fa-egg"></i> Breeding</li>
+                <li role="tab" aria-selected="false" data-view="health"><i class="fas fa-heartbeat"></i> Health</li>
+                <li role="tab" aria-selected="false" data-view="reports"><i class="fas fa-chart-bar"></i> Reports</li>
+                <li role="tab" aria-selected="false" data-view="settings"><i class="fas fa-cog"></i> Settings</li>
+            </ul>
+        </nav>
+        
+        <main>
+            <div id="message-container"></div>
+
+            <div id="dashboard-view" class="view active" role="tabpanel">
+                <div class="dashboard-stats">
+                    <div class="stat-card"><i class="fas fa-dove"></i><div id="total-pigeons-stat" class="stat-number">0</div><div class="stat-title">Total Pigeons</div></div>
+                    <div class="stat-card"><i class="fas fa-mars"></i><div id="total-cocks-stat" class="stat-number">0</div><div class="stat-title">Cocks</div></div>
+                    <div class="stat-card"><i class="fas fa-venus"></i><div id="total-hens-stat" class="stat-number">0</div><div class="stat-title">Hens</div></div>
+                    <div class="stat-card"><i class="fas fa-baby"></i><div id="total-young-stat" class="stat-number">0</div><div class="stat-title">Young (This Year)</div></div>
+                    <div class="stat-card"><i class="fas fa-users"></i><div id="total-pairs-stat" class="stat-number">0</div><div class="stat-title">Breeding Pairs</div></div>
+                </div>
+                <div class="dashboard-charts">
+                    <div class="chart-container"><h3>Pigeon Status</h3><canvas id="pigeon-status-chart"></canvas></div>
+                    <div class="chart-container"><h3>Monthly Hatches (This Year)</h3><canvas id="monthly-hatch-chart"></canvas></div>
+                </div>
+            </div>
+
+            <div id="pigeons-view" class="view" role="tabpanel">
+                <div class="controls"><button id="add-pigeon-btn" class="primary-btn"><i class="fas fa-plus"></i> Add Pigeon</button><div class="search-container"><input type="text" id="search-pigeons" placeholder="Search pigeons..." aria-label="Search pigeons"><i class="fas fa-search"></i></div></div>
+                <table id="pigeons-table"><thead><tr><th>Band #</th><th>Name</th><th>Gender</th><th>Color</th><th>Hatch Date</th><th>Strain</th><th>Status</th><th>Actions</th></tr></thead><tbody></tbody></table>
+            </div>
+            
+            <div id="breeding-view" class="view" role="tabpanel">
+                <h2>Breeding Records</h2><div class="controls"><button id="add-pair-btn" class="primary-btn"><i class="fas fa-plus"></i> Add Breeding Pair</button></div>
+                <table id="pairs-table"><thead><tr><th>Pair ID</th><th>Cock</th><th>Hen</th><th>Nest Box</th><th>Status</th><th>Eggs Laid</th><th>Hatched</th><th>Est. Hatch Date</th><th>Actions</th></tr></thead><tbody></tbody></table>
+            </div>
+            
+            <div id="health-view" class="view" role="tabpanel">
+                <h2>Health Records</h2><div class="controls"><button id="add-health-record-btn" class="primary-btn"><i class="fas fa-plus"></i> Add Health Record</button></div>
+                <table id="health-table"><thead><tr><th>Pigeon</th><th>Date</th><th>Type</th><th>Description</th><th>Treatment</th><th>Actions</th></tr></thead><tbody></tbody></table>
+            </div>
+            
+            <div id="reports-view" class="view" role="tabpanel">
+                <h2>Reports</h2>
+                <div class="report-options">
+                    <div class="report-card"><i class="fas fa-dove"></i><h3>Pigeon Inventory</h3><p>Complete list of all pigeons in your loft</p><button class="secondary-btn" data-report="inventory">Generate</button></div>
+                    <div class="report-card"><i class="fas fa-egg"></i><h3>Breeding Summary</h3><p>Summary of breeding results and statistics</p><button class="secondary-btn" data-report="breeding">Generate</button></div>
+                    <div class="report-card"><i class="fas fa-heartbeat"></i><h3>Health Summary</h3><p>Overview of health issues and treatments</p><button class="secondary-btn" data-report="health">Generate</button></div>
+                </div>
+            </div>
+            
+            <div id="settings-view" class="view" role="tabpanel">
+                <h2>Settings</h2>
+                <div class="settings-container">
+                    <div class="settings-section"><h3>Loft Information</h3><form id="loft-info-form"><div class="form-group"><label for="loft-name">Loft Name:</label><input type="text" id="loft-name" placeholder="Enter loft name"></div><div class="form-group"><label for="owner-name">Owner Name:</label><input type="text" id="owner-name" placeholder="Enter owner name"></div><div class="form-group"><label for="location">Location:</label><input type="text" id="location" placeholder="Enter location"></div><button type="submit" class="primary-btn">Save</button></form></div>
+                    <div class="settings-section"><h3>Data Management</h3><input type="file" id="import-file-input" accept="application/json" style="display:none;"><button id="export-data" class="secondary-btn"><i class="fas fa-download"></i> Export Data</button><button id="import-data" class="secondary-btn"><i class="fas fa-upload"></i> Import Data</button><button id="clear-data" class="danger-btn"><i class="fas fa-trash"></i> Clear All Data</button></div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Modals -->
+    <div id="pigeon-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="pigeon-modal-title"><div class="modal-content"><span class="close-modal" role="button" aria-label="Close">&times;</span><h2 id="pigeon-modal-title">Add New Pigeon</h2><form id="pigeon-form" novalidate><div class="form-row"><div class="form-group"><label for="band-number">Band Number:</label><input type="text" id="band-number" required></div><div class="form-group"><label for="pigeon-name">Name (optional):</label><input type="text" id="pigeon-name"></div></div><div class="form-row"><div class="form-group"><label for="gender">Gender:</label><select id="gender" required><option value="">Select Gender</option><option value="cock">Cock</option><option value="hen">Hen</option><option value="unknown">Unknown</option></select></div><div class="form-group"><label for="color">Color:</label><input type="text" id="color"></div></div><div class="form-row"><div class="form-group"><label for="hatch-date">Hatch Date:</label><input type="date" id="hatch-date"></div><div class="form-group"><label for="strain">Strain/Breed:</label><input type="text" id="strain"></div></div><div class="form-row"><div class="form-group"><label for="status">Status:</label><select id="status"><option value="active">Active</option><option value="breeding">Breeding</option><option value="sold">Sold</option><option value="deceased">Deceased</option></select></div><div class="form-group"><label for="section">Loft Section:</label><input type="text" id="section"></div></div><div class="form-group"><label for="notes">Notes:</label><textarea id="notes" rows="3"></textarea></div><div class="form-group"><label for="pigeon-image">Image:</label><input type="file" id="pigeon-image" accept="image/*"></div><div class="form-buttons"><button type="submit" class="primary-btn">Save Pigeon</button><button type="button" class="secondary-btn cancel-btn">Cancel</button></div></form></div></div>
+    <div id="breeding-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="breeding-modal-title"><div class="modal-content"><span class="close-modal" role="button" aria-label="Close">&times;</span><h2 id="breeding-modal-title">Add Breeding Pair</h2><form id="breeding-form" novalidate><h3 class="form-section-header">Pair Details</h3><div class="form-row"><div class="form-group"><label for="cock-select">Cock:</label><select id="cock-select" required><option value="">Select Cock</option></select></div><div class="form-group"><label for="hen-select">Hen:</label><select id="hen-select" required><option value="">Select Hen</option></select></div></div><div class="form-row"><div class="form-group"><label for="nest-box">Nest Box:</label><input type="text" id="nest-box"></div><div class="form-group"><label for="pairing-date">Pairing Date:</label><input type="date" id="pairing-date"></div></div><div class="form-row"><div class="form-group"><label for="pair-status">Status:</label><select id="pair-status"><option value="paired">Paired</option><option value="laying">Laying</option><option value="incubating">Incubating</option><option value="feeding">Feeding Young</option><option value="inactive">Inactive</option></select></div></div><h3 class="form-section-header">Egg & Hatching Details</h3><div class="form-row"><div class="form-group"><label for="first-egg-date">Date of First Egg:</label><input type="date" id="first-egg-date"></div></div><div class="form-row"><div class="form-group"><label for="activation-date">Est. Activation Date:</label><input type="text" id="activation-date" class="readonly-input" readonly></div><div class="form-group"><label for="activation-days">Days After 1st Egg:</label><input type="number" id="activation-days" value="8" style="width: 70px;"></div><div class="form-group"><label for="activated-eggs"># Laid Eggs:</label><input type="number" id="activated-eggs" min="0"></div></div><div class="form-row"><div class="form-group"><label for="hatching-date">Est. Hatching Date:</label><input type="text" id="hatching-date" class="readonly-input" readonly></div><div class="form-group"><label for="hatching-days">Days After 1st Egg:</label><input type="number" id="hatching-days" value="20" style="width: 70px;"></div><div class="form-group"><label for="hatched-eggs"># Hatched Eggs:</label><input type="number" id="hatched-eggs" min="0"></div></div><div class="form-row"><div class="form-group"><label for="ring-date">Est. Ring Date:</label><input type="text" id="ring-date" class="readonly-input" readonly></div><div class="form-group"><label for="ring-days">Days After 1st Egg:</label><input type="number" id="ring-days" value="28" style="width: 70px;"></div></div><div class="form-group"><label for="pair-notes">Notes:</label><textarea id="pair-notes" rows="3"></textarea></div><div class="form-buttons"><button type="submit" class="primary-btn">Save Pair</button><button type="button" class="secondary-btn cancel-btn">Cancel</button></div></form></div></div>
+    <div id="health-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="health-modal-title"><div class="modal-content"><span class="close-modal" role="button" aria-label="Close">&times;</span><h2 id="health-modal-title">Add Health Record</h2><form id="health-form" novalidate><div class="form-row"><div class="form-group"><label for="health-pigeon-select">Pigeon:</label><select id="health-pigeon-select" required><option value="">Select a Pigeon</option></select></div><div class="form-group"><label for="health-date">Date:</label><input type="date" id="health-date" required></div></div><div class="form-row"><div class="form-group"><label for="health-type">Record Type:</label><select id="health-type" required><option value="">Select Type</option><option value="vaccination">Vaccination</option><option value="deworming">Deworming</option><option value="treatment">Treatment</option><option value="checkup">Check-up</option><option value="injury">Injury</option></select></div></div><div class="form-group"><label for="health-description">Description:</label><textarea id="health-description" rows="2" placeholder="e.g., PMV vaccine, Canker treatment"></textarea></div><div class="form-group"><label for="health-treatment">Treatment/Medication:</label><textarea id="health-treatment" rows="2" placeholder="e.g., 1 tablet Spartrix, Baycox 2 days"></textarea></div><div class="form-buttons"><button type="submit" class="primary-btn">Save Record</button><button type="button" class="secondary-btn cancel-btn">Cancel</button></div></form></div></div>
+    <div id="report-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="report-modal-title"><div class="modal-content"><span class="close-modal" role="button" aria-label="Close">&times;</span><h2 id="report-modal-title" style="margin-bottom: 1.5rem;">Report</h2><div id="report-content"></div><div class="form-buttons"><button type="button" id="print-report-btn" class="primary-btn"><i class="fas fa-print"></i> Print Report</button><button type="button" class="secondary-btn cancel-btn">Close</button></div></div></div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        let pigeons = [], breedingPairs = [], healthRecords = [], loftInfo = {};
+        let currentEditingPigeon = null, currentEditingPair = null, currentEditingHealth = null;
+        let lastFocusedElement = null;
+        let pigeonStatusChart = null, monthlyHatchChart = null;
+
+        function initializeApp() {
+            loadData();
+            initializeEventListeners();
+            updateAllTables();
+            updateLoftInfoForm();
+            setupDateCalculations();
+            updateDashboard();
+            switchView('dashboard');
+        }
+
+        function loadData() {
+            pigeons = JSON.parse(localStorage.getItem('pigeons')) || [{ id: Date.now() + 1, bandNumber: 'AU-2024-001', name: 'Champion', gender: 'cock', color: 'Blue Bar', hatchDate: '2024-03-15', strain: 'Janssen', status: 'active' }, { id: Date.now() + 2, bandNumber: 'AU-2024-002', name: 'Beauty', gender: 'hen', color: 'Red Check', hatchDate: '2024-03-20', strain: 'Vandenabeele', status: 'breeding' }];
+            breedingPairs = JSON.parse(localStorage.getItem('breedingPairs')) || [];
+            healthRecords = JSON.parse(localStorage.getItem('healthRecords')) || [];
+            loftInfo = JSON.parse(localStorage.getItem('loftInfo')) || {};
+        }
+
+        function saveData() {
+            localStorage.setItem('pigeons', JSON.stringify(pigeons));
+            localStorage.setItem('breedingPairs', JSON.stringify(breedingPairs));
+            localStorage.setItem('healthRecords', JSON.stringify(healthRecords));
+            localStorage.setItem('loftInfo', JSON.stringify(loftInfo));
+            updateDashboard();
+        }
+        
+        function updateAllTables() { updatePigeonTable(); updateBreedingTable(); updateHealthTable(); }
+        function updateLoftInfoForm() { document.getElementById('loft-name').value = loftInfo.name || ''; document.getElementById('owner-name').value = loftInfo.owner || ''; document.getElementById('location').value = loftInfo.location || ''; }
+
+        function initializeEventListeners() {
+            document.querySelector('nav ul').addEventListener('click', (e) => { const target = e.target.closest('li[role="tab"]'); if (target) switchView(target.getAttribute('data-view')); });
+            document.getElementById('add-pigeon-btn').addEventListener('click', () => openPigeonModal());
+            document.getElementById('add-pair-btn').addEventListener('click', () => openBreedingModal());
+            document.getElementById('add-health-record-btn').addEventListener('click', () => openHealthModal());
+            document.getElementById('pigeon-form').addEventListener('submit', savePigeon);
+            document.getElementById('breeding-form').addEventListener('submit', saveBreedingPair);
+            document.getElementById('health-form').addEventListener('submit', saveHealthRecord);
+            document.getElementById('loft-info-form').addEventListener('submit', (e) => { e.preventDefault(); loftInfo = { name: document.getElementById('loft-name').value, owner: document.getElementById('owner-name').value, location: document.getElementById('location').value }; saveData(); showMessage('Loft information saved!', 'success'); });
+            document.querySelectorAll('.modal').forEach(modal => { modal.addEventListener('click', (e) => { if (e.target === modal || e.target.classList.contains('close-modal') || e.target.classList.contains('cancel-btn')) closeModal(modal.id); }); });
+            document.getElementById('search-pigeons').addEventListener('input', (e) => filterPigeons(e.target.value.toLowerCase()));
+            document.querySelectorAll('[data-report]').forEach(btn => btn.addEventListener('click', (e) => generateReport(e.target.dataset.report)));
+            document.getElementById('print-report-btn').addEventListener('click', () => window.print());
+            document.getElementById('export-data').addEventListener('click', exportData);
+            document.getElementById('import-data').addEventListener('click', () => document.getElementById('import-file-input').click());
+            document.getElementById('import-file-input').addEventListener('change', importData);
+            document.getElementById('clear-data').addEventListener('click', () => { if (confirm('Are you sure? This will delete all data.')) { localStorage.clear(); pigeons = []; breedingPairs = []; healthRecords = []; loftInfo = {}; updateAllTables(); updateLoftInfoForm(); saveData(); showMessage('All data has been cleared.', 'success'); } });
+        }
+        
+        function switchView(viewName) {
+            document.querySelectorAll('.view').forEach(view => view.classList.remove('active'));
+            document.getElementById(viewName + '-view').classList.add('active');
+            document.querySelectorAll('nav li[role="tab"]').forEach(item => { item.setAttribute('aria-selected', item.getAttribute('data-view') === viewName); });
+        }
+
+        function openModal(modalId) {
+            lastFocusedElement = document.activeElement;
+            const modal = document.getElementById(modalId);
+            modal.classList.add('is-open');
+            const focusable = modal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+            modal.addEventListener('keydown', (e) => handleModalFocus(e, focusable[0], focusable[focusable.length - 1]));
+            focusable[0]?.focus();
+        }
+
+        function closeModal(modalId) { document.getElementById(modalId).classList.remove('is-open'); lastFocusedElement?.focus(); }
+        function handleModalFocus(e, firstEl, lastEl) { if (e.key === 'Tab') { if (e.shiftKey) { if (document.activeElement === firstEl) { lastEl.focus(); e.preventDefault(); } } else { if (document.activeElement === lastEl) { firstEl.focus(); e.preventDefault(); } } } }
+        
+        function openPigeonModal(pigeon = null) {
+            document.getElementById('pigeon-form').reset();
+            currentEditingPigeon = pigeon;
+            document.getElementById('pigeon-modal-title').textContent = pigeon ? 'Edit Pigeon' : 'Add New Pigeon';
+            if (pigeon) populatePigeonForm(pigeon);
+            openModal('pigeon-modal');
+        }
+
+        function openBreedingModal(pair = null) {
+            document.getElementById('breeding-form').reset();
+            populateBreedingSelects();
+            currentEditingPair = pair;
+            document.getElementById('breeding-modal-title').textContent = pair ? 'Edit Breeding Pair' : 'Add Breeding Pair';
+            if (pair) populateBreedingForm(pair);
+            updateCalculatedDates();
+            openModal('breeding-modal');
+        }
+        
+        function openHealthModal(record = null) {
+            document.getElementById('health-form').reset();
+            populateAllPigeonSelect('health-pigeon-select');
+            currentEditingHealth = record;
+            document.getElementById('health-modal-title').textContent = record ? 'Edit Health Record' : 'Add Health Record';
+            if (record) populateHealthForm(record);
+            openModal('health-modal');
+        }
+
+        function savePigeon(e) {
+            e.preventDefault();
+            const bandNumber = document.getElementById('band-number').value.trim(), gender = document.getElementById('gender').value;
+            if (!bandNumber || !gender) { showMessage('Band Number and Gender are required.', 'error'); return; }
+            const pigeonData = { id: currentEditingPigeon ? currentEditingPigeon.id : Date.now(), bandNumber, gender, name: document.getElementById('pigeon-name').value.trim(), color: document.getElementById('color').value.trim(), hatchDate: document.getElementById('hatch-date').value, strain: document.getElementById('strain').value.trim(), status: document.getElementById('status').value, section: document.getElementById('section').value.trim(), notes: document.getElementById('notes').value.trim() };
+            if (currentEditingPigeon) pigeons[pigeons.findIndex(p => p.id === currentEditingPigeon.id)] = pigeonData; else pigeons.push(pigeonData);
+            showMessage(`Pigeon ${currentEditingPigeon ? 'updated' : 'added'}!`, 'success');
+            updatePigeonTable(); saveData(); closeModal('pigeon-modal');
+        }
+
+        function updatePigeonTable() {
+            const tbody = document.querySelector('#pigeons-table tbody');
+            tbody.innerHTML = '';
+            pigeons.forEach(p => {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td>${p.bandNumber}</td><td>${p.name||'-'}</td><td>${p.gender}</td><td>${p.color||'-'}</td><td>${formatDateForDisplay(p.hatchDate)}</td><td>${p.strain||'-'}</td><td><span class="status-badge status-${p.status}">${p.status}</span></td><td><button class="secondary-btn" style="padding:5px 10px;font-size:12px;" onclick="window.editPigeon(${p.id})"><i class="fas fa-edit"></i> Edit</button> <button class="danger-btn" style="padding:5px 10px;font-size:12px;" onclick="window.deletePigeon(${p.id})"><i class="fas fa-trash"></i> Delete</button></td>`;
+                tbody.appendChild(row);
+            });
+        }
+        
+        window.editPigeon = (id) => openPigeonModal(pigeons.find(p => p.id === id));
+        window.deletePigeon = (id) => { if (confirm('Are you sure?')) { pigeons = pigeons.filter(p => p.id !== id); updatePigeonTable(); saveData(); showMessage('Pigeon deleted.', 'success'); } };
+        function populatePigeonForm(pigeon) { for(let key in pigeon) { const el = document.getElementById(key.replace(/([A-Z])/g, '-$1').toLowerCase()); if(el) el.value = pigeon[key] || ''; } }
+        function filterPigeons(term) { document.querySelectorAll('#pigeons-table tbody tr').forEach(row => { row.style.display = row.textContent.toLowerCase().includes(term) ? '' : 'none'; }); }
+        
+        function saveBreedingPair(e) {
+            e.preventDefault();
+            const cockId = document.getElementById('cock-select').value, henId = document.getElementById('hen-select').value;
+            if (!cockId || !henId) { showMessage('Please select both a cock and a hen.', 'error'); return; }
+            const pairData = { id: currentEditingPair ? currentEditingPair.id : Date.now(), cockId, henId, nestBox: document.getElementById('nest-box').value, pairingDate: document.getElementById('pairing-date').value, status: document.getElementById('pair-status').value, firstEggDate: document.getElementById('first-egg-date').value, activationDays: document.getElementById('activation-days').value, activatedEggs: document.getElementById('activated-eggs').value, hatchingDays: document.getElementById('hatching-days').value, hatchedEggs: document.getElementById('hatched-eggs').value, ringDays: document.getElementById('ring-days').value, notes: document.getElementById('pair-notes').value };
+            if (currentEditingPair) breedingPairs[breedingPairs.findIndex(p => p.id === currentEditingPair.id)] = pairData; else breedingPairs.push(pairData);
+            showMessage(`Breeding pair ${currentEditingPair ? 'updated' : 'added'}!`, 'success');
+            updateBreedingTable(); saveData(); closeModal('breeding-modal');
+        }
+
+        function updateBreedingTable() {
+            const tbody = document.querySelector('#pairs-table tbody');
+            tbody.innerHTML = '';
+            breedingPairs.forEach(pair => {
+                const cock = pigeons.find(p => p.id == pair.cockId), hen = pigeons.find(p => p.id == pair.henId);
+                const hatchDate = pair.firstEggDate ? addDaysAndFormat(pair.firstEggDate, pair.hatchingDays || 20) : null;
+                const row = document.createElement('tr');
+                row.innerHTML = `<td>BP-${String(pair.id).slice(-4)}</td><td>${cock?cock.bandNumber:'N/A'}</td><td>${hen?hen.bandNumber:'N/A'}</td><td>${pair.nestBox||'-'}</td><td><span class="status-badge status-${pair.status}">${pair.status}</span></td><td>${pair.activatedEggs||'0'}</td><td>${pair.hatchedEggs||'0'}</td><td>${formatDateForDisplay(hatchDate)}</td><td><button class="secondary-btn" style="padding:5px 10px;font-size:12px;" onclick="window.editBreedingPair(${pair.id})"><i class="fas fa-edit"></i> Edit</button> <button class="danger-btn" style="padding:5px 10px;font-size:12px;" onclick="window.deleteBreedingPair(${pair.id})"><i class="fas fa-trash"></i> Delete</button></td>`;
+                tbody.appendChild(row);
+            });
+        }
+        
+        window.editBreedingPair = (id) => openBreedingModal(breedingPairs.find(p => p.id === id));
+        window.deleteBreedingPair = (id) => { if (confirm('Are you sure?')) { breedingPairs = breedingPairs.filter(p => p.id !== id); updateBreedingTable(); saveData(); showMessage('Breeding pair deleted.', 'success'); } };
+        function populateBreedingForm(pair) { populateBreedingSelects(); for(let key in pair) { const el = document.getElementById({cockId:'cock-select',henId:'hen-select'}[key] || key.replace(/([A-Z])/g, '-$1').toLowerCase()); if(el) el.value = pair[key] || ''; } updateCalculatedDates(); }
+        function populateBreedingSelects() {
+            const cockSelect = document.getElementById('cock-select'), henSelect = document.getElementById('hen-select');
+            cockSelect.innerHTML = '<option value="">Select Cock</option>'; henSelect.innerHTML = '<option value="">Select Hen</option>';
+            pigeons.forEach(p => { const option = document.createElement('option'); option.value = p.id; option.textContent = `${p.bandNumber} - ${p.name||'Unnamed'}`; if (p.gender === 'cock') cockSelect.appendChild(option); else if (p.gender === 'hen') henSelect.appendChild(option); });
+        }
+        function populateAllPigeonSelect(selectId) { const select = document.getElementById(selectId); select.innerHTML = '<option value="">Select a Pigeon</option>'; pigeons.forEach(p => { const option = document.createElement('option'); option.value = p.id; option.textContent = `${p.bandNumber} - ${p.name||'Unnamed'}`; select.appendChild(option); }); }
+        
+        function saveHealthRecord(e) {
+            e.preventDefault();
+            const pigeonId = document.getElementById('health-pigeon-select').value, date = document.getElementById('health-date').value, type = document.getElementById('health-type').value;
+            if (!pigeonId || !date || !type) { showMessage('Pigeon, Date, and Type are required.', 'error'); return; }
+            const recordData = { id: currentEditingHealth ? currentEditingHealth.id : Date.now(), pigeonId, date, type, description: document.getElementById('health-description').value, treatment: document.getElementById('health-treatment').value };
+            if (currentEditingHealth) healthRecords[healthRecords.findIndex(r => r.id === currentEditingHealth.id)] = recordData; else healthRecords.push(recordData);
+            showMessage(`Health record ${currentEditingHealth ? 'updated' : 'added'}.`, 'success');
+            updateHealthTable(); saveData(); closeModal('health-modal');
+        }
+
+        function populateHealthForm(record) { document.getElementById('health-pigeon-select').value = record.pigeonId; document.getElementById('health-date').value = record.date; document.getElementById('health-type').value = record.type; document.getElementById('health-description').value = record.description; document.getElementById('health-treatment').value = record.treatment; }
+        function updateHealthTable() {
+            const tbody = document.querySelector('#health-table tbody');
+            tbody.innerHTML = '';
+            healthRecords.forEach(record => {
+                const pigeon = pigeons.find(p => p.id == record.pigeonId);
+                const row = document.createElement('tr');
+                row.innerHTML = `<td>${pigeon?pigeon.bandNumber:'N/A'}</td><td>${formatDateForDisplay(record.date)}</td><td>${record.type}</td><td>${record.description||'-'}</td><td>${record.treatment||'-'}</td><td><button class="secondary-btn" style="padding:5px 10px;font-size:12px;" onclick="window.editHealthRecord(${record.id})"><i class="fas fa-edit"></i></button> <button class="danger-btn" style="padding:5px 10px;font-size:12px;" onclick="window.deleteHealthRecord(${record.id})"><i class="fas fa-trash"></i></button></td>`;
+                tbody.appendChild(row);
+            });
+        }
+        
+        window.editHealthRecord = (id) => openHealthModal(healthRecords.find(r => r.id === id));
+        window.deleteHealthRecord = (id) => { if(confirm('Are you sure?')) { healthRecords = healthRecords.filter(r => r.id !== id); updateHealthTable(); saveData(); showMessage('Health record deleted.', 'success'); } };
+        
+        function generateReport(type) {
+            const contentDiv = document.getElementById('report-content'), titleEl = document.getElementById('report-modal-title');
+            let content = '', title = '';
+            if (type === 'inventory') { title = 'Pigeon Inventory Report'; content = `<h3>Total Pigeons: ${pigeons.length}</h3><table><thead><tr><th>Band #</th><th>Name</th><th>Gender</th><th>Hatch Date</th><th>Strain</th><th>Status</th></tr></thead><tbody>`; pigeons.forEach(p => { content += `<tr><td>${p.bandNumber}</td><td>${p.name||'-'}</td><td>${p.gender}</td><td>${formatDateForDisplay(p.hatchDate)}</td><td>${p.strain||'-'}</td><td>${p.status}</td></tr>`; }); content += '</tbody></table>'; }
+            else if (type === 'breeding') { title = 'Breeding Summary Report'; const totalEggs = breedingPairs.reduce((sum, p) => sum + parseInt(p.activatedEggs||0), 0); const totalHatched = breedingPairs.reduce((sum, p) => sum + parseInt(p.hatchedEggs||0), 0); const hatchRate = totalEggs > 0 ? ((totalHatched / totalEggs) * 100).toFixed(1) : 0; content = `<h3>Summary</h3><p>Total Pairs: ${breedingPairs.length} | Total Eggs Laid: ${totalEggs} | Total Hatched: ${totalHatched} | Hatch Rate: ${hatchRate}%</p><h4>Details</h4><table><thead><tr><th>Pair ID</th><th>Cock</th><th>Hen</th><th>Eggs Laid</th><th>Hatched</th></tr></thead><tbody>`; breedingPairs.forEach(p => { const cock = pigeons.find(b => b.id == p.cockId), hen = pigeons.find(b => b.id == p.henId); content += `<tr><td>BP-${String(p.id).slice(-4)}</td><td>${cock?cock.bandNumber:'N/A'}</td><td>${hen?hen.bandNumber:'N/A'}</td><td>${p.activatedEggs||0}</td><td>${p.hatchedEggs||0}</td></tr>`; }); content += '</tbody></table>'; }
+            else if (type === 'health') { title = 'Health Summary Report'; const recordsByPigeon = healthRecords.reduce((acc, rec) => { (acc[rec.pigeonId] = acc[rec.pigeonId]||[]).push(rec); return acc; }, {}); if (Object.keys(recordsByPigeon).length === 0) { content = '<p>No health records found.</p>'; } else { for (const pigeonId in recordsByPigeon) { const pigeon = pigeons.find(p => p.id == pigeonId); content += `<h4>Pigeon: ${pigeon?pigeon.bandNumber:'Unknown'} (${pigeon?pigeon.name||'Unnamed':''})</h4><table><thead><tr><th>Date</th><th>Type</th><th>Description</th><th>Treatment</th></tr></thead><tbody>`; recordsByPigeon[pigeonId].sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(rec => { content += `<tr><td>${formatDateForDisplay(rec.date)}</td><td>${rec.type}</td><td>${rec.description||'-'}</td><td>${rec.treatment||'-'}</td></tr>`; }); content += '</tbody></table>'; } } }
+            titleEl.textContent = title; contentDiv.innerHTML = content; openModal('report-modal');
+        }
+        
+        function updateDashboard() {
+            document.getElementById('total-pigeons-stat').textContent = pigeons.length;
+            document.getElementById('total-cocks-stat').textContent = pigeons.filter(p => p.gender === 'cock').length;
+            document.getElementById('total-hens-stat').textContent = pigeons.filter(p => p.gender === 'hen').length;
+            document.getElementById('total-pairs-stat').textContent = breedingPairs.length;
+            const currentYear = new Date().getFullYear();
+            document.getElementById('total-young-stat').textContent = pigeons.filter(p => p.hatchDate && new Date(p.hatchDate).getFullYear() === currentYear).length;
+            
+            const statusCounts = pigeons.reduce((acc, p) => { acc[p.status] = (acc[p.status] || 0) + 1; return acc; }, {});
+            if (pigeonStatusChart) pigeonStatusChart.destroy();
+            pigeonStatusChart = new Chart(document.getElementById('pigeon-status-chart').getContext('2d'), { type: 'doughnut', data: { labels: Object.keys(statusCounts), datasets: [{ data: Object.values(statusCounts), backgroundColor: ['#28a745', '#ffc107', '#dc3545', '#6c757d', '#17a2b8'] }] }, options: { responsive: true, maintainAspectRatio: false } });
+
+            const monthlyHatches = Array(12).fill(0);
+            breedingPairs.forEach(pair => { if(pair.firstEggDate && pair.hatchedEggs > 0) { const hatchDate = new Date(addDaysAndFormat(pair.firstEggDate, pair.hatchingDays || 20)); if (hatchDate.getFullYear() === currentYear) monthlyHatches[hatchDate.getMonth()] += parseInt(pair.hatchedEggs); } });
+            if (monthlyHatchChart) monthlyHatchChart.destroy();
+            monthlyHatchChart = new Chart(document.getElementById('monthly-hatch-chart').getContext('2d'), { type: 'bar', data: { labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], datasets: [{ label: 'Hatched', data: monthlyHatches, backgroundColor: '#667eea' }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } } });
+        }
+
+        function formatDateForDisplay(isoDate) { if (!isoDate || typeof isoDate !== 'string') return '-'; const [year, month, day] = isoDate.split('-'); return `${day}/${month}/${year}`; }
+        function showMessage(message, type) { const container = document.getElementById('message-container'), div = document.createElement('div'); div.className = `message ${type}-message`; div.textContent = message; container.appendChild(div); setTimeout(() => { div.remove(); }, 3000); }
+        function setupDateCalculations() { ['first-egg-date', 'activation-days', 'hatching-days', 'ring-days'].forEach(id => { document.getElementById(id).addEventListener('input', updateCalculatedDates); }); }
+        const addDaysAndFormat = (startDate, days) => { const date = new Date(startDate + 'T00:00:00'); date.setDate(date.getDate() + parseInt(days)); return date.toISOString().split('T')[0]; };
+        function updateCalculatedDates() {
+            const firstEggDate = document.getElementById('first-egg-date').value, ids = ['activation-date', 'hatching-date', 'ring-date'];
+            if (!firstEggDate) { ids.forEach(id => document.getElementById(id).value = ''); return; }
+            document.getElementById('activation-date').value = formatDateForDisplay(addDaysAndFormat(firstEggDate, document.getElementById('activation-days').value));
+            document.getElementById('hatching-date').value = formatDateForDisplay(addDaysAndFormat(firstEggDate, document.getElementById('hatching-days').value));
+            document.getElementById('ring-date').value = formatDateForDisplay(addDaysAndFormat(firstEggDate, document.getElementById('ring-days').value));
+        }
+
+        function exportData() {
+            const dataToExport = { pigeons, breedingPairs, healthRecords, loftInfo };
+            const dataStr = JSON.stringify(dataToExport, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = `haute-voliere-pro-backup-${new Date().toISOString().slice(0, 10)}.json`;
+            document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+            showMessage('Data exported successfully!', 'success');
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                if (confirm('Are you sure? Importing will overwrite all current data.')) {
+                    try {
+                        const imported = JSON.parse(e.target.result);
+                        if (imported.pigeons && imported.breedingPairs && imported.healthRecords && imported.loftInfo) {
+                            pigeons = imported.pigeons; breedingPairs = imported.breedingPairs; healthRecords = imported.healthRecords; loftInfo = imported.loftInfo;
+                            saveData(); updateAllTables(); updateLoftInfoForm();
+                            showMessage('Data imported successfully!', 'success');
+                        } else { showMessage('Invalid or corrupted backup file.', 'error'); }
+                    } catch (err) { showMessage('Failed to parse backup file. Must be a valid JSON file.', 'error'); }
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = null;
+        }
+
+        initializeApp();
+    });
+    </script>
+</body>
+</html>
