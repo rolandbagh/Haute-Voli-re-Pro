@@ -5,123 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="A comprehensive web application for managing pigeon lofts, including pigeon inventory, breeding pairs, and health records.">
     <title>Haute Volière Pro</title>
-    <link rel="icon" type="image/png" href="https://i.imgur.com/kqAORaz.png">
+    <link rel="icon" type="image/png" href="logo.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f5f5f5; color: #333; }
-        .app-container { display: flex; flex-direction: column; min-height: 100vh; }
-        header { display: flex; justify-content: space-between; align-items: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1rem 2rem; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        header h1 { font-size: 2rem; font-weight: 300; display: flex; align-items: center; gap: 15px; }
-        header h1 img { height: 2.5rem; }
-        #backup-prompt { background-color: #ffc107; color: #333; border: none; border-radius: 5px; padding: 8px 15px; font-weight: 600; cursor: pointer; display: none; }
-        #backup-prompt.visible { display: inline-flex; }
-        #backup-prompt i { margin-right: 8px; }
-        nav ul { display: flex; list-style: none; padding: 0; margin: 0; overflow-x: auto; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        nav li { padding: 1rem 1.5rem; cursor: pointer; transition: all 0.3s ease; white-space: nowrap; border-bottom: 3px solid transparent; }
-        nav li:hover { background-color: #f8f9fa; }
-        nav li[aria-selected="true"] { background-color: #e3f2fd; border-bottom-color: #667eea; color: #667eea; font-weight: 600; }
-        nav li i { margin-right: 8px; }
-        main { flex: 1; padding: 2rem; overflow-x: auto; }
-        .view { display: none; }
-        .view.active { display: block; }
-        .controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
-        .primary-btn, .secondary-btn, .danger-btn { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 8px; }
-        .primary-btn { background-color: #667eea; color: white; }
-        .secondary-btn { background-color: #6c757d; color: white; }
-        .danger-btn { background-color: #dc3545; color: white; }
-        .search-container { position: relative; }
-        .search-container input { padding: 10px 40px 10px 15px; border: 1px solid #ddd; border-radius: 25px; width: 300px; font-size: 14px; }
-        .search-container i { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: #666; }
-        .table-wrapper { overflow-x: auto; }
-        table { width: 100%; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1); border-collapse: collapse; min-width: 900px; }
-        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee; white-space: nowrap; }
-        th { background-color: #f8f9fa; font-weight: 600; color: #495057; }
-        tr:hover { background-color: #f8f9fa; }
-        td .actions-cell { display: flex; gap: 5px; }
-        
-        /* NEW: Sorting Styles */
-        th[data-sort] { cursor: pointer; user-select: none; position: relative; }
-        .sort-indicator {
-            display: inline-block;
-            width: 1em;
-            text-align: center;
-            margin-left: 5px;
-            color: #ccc;
-            font-weight: 900;
-        }
-        th[data-sort]:hover .sort-indicator { color: #999; }
-        th[data-sort] .sort-indicator::after {
-            font-family: "Font Awesome 6 Free";
-            content: "\f0dc"; /* Default sort icon (up/down) */
-        }
-        th[data-sort].sorted-asc .sort-indicator { color: #333; }
-        th[data-sort].sorted-asc .sort-indicator::after {
-            content: "\f0de"; /* Up arrow */
-        }
-        th[data-sort].sorted-desc .sort-indicator { color: #333; }
-        th[data-sort].sorted-desc .sort-indicator::after {
-            content: "\f0dd"; /* Down arrow */
-        }
-
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); align-items: center; justify-content: center; }
-        .modal.is-open { display: flex; }
-        .modal-content { background-color: white; padding: 2rem; border-radius: 10px; width: 90%; max-width: 800px; max-height: 90vh; overflow-y: auto; position: relative; }
-        .close-modal { position: absolute; right: 1rem; top: 1rem; font-size: 24px; cursor: pointer; color: #666; }
-        .form-row, .details-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
-        .form-group, .details-group { display: flex; flex-direction: column; }
-        .form-group label, .details-group-label { margin-bottom: 5px; font-weight: 600; color: #495057; }
-        .details-group-value { color: #333; padding: 8px 0; }
-        .form-group input, .form-group select, .form-group textarea { padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; }
-        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2); }
-        .form-buttons { display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem; }
-        .form-section-header { width: 100%; padding-bottom: 8px; margin-top: 15px; margin-bottom: 10px; border-bottom: 1px solid #e0e0e0; font-size: 1.1em; color: #333; }
-        .readonly-input { background-color: #f8f9fa !important; color: #6c757d !important; }
-        .report-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 2rem; margin-top: 2rem; }
-        .report-card { background: white; padding: 2rem; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); text-align: center; }
-        .report-card i { font-size: 3rem; color: #667eea; margin-bottom: 1rem; }
-        .report-card h3 { margin-bottom: 1.5rem; text-align: center; color: #333; font-weight: 500; }
-        .report-card p { color: #666; margin-bottom: 1.5rem; }
-        .settings-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 2rem; }
-        .settings-section { background: white; padding: 2rem; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .settings-section h3 { margin-bottom: 1.5rem; color: #333; }
-        .message-container { position: fixed; top: 20px; right: 20px; z-index: 2000; display: flex; flex-direction: column; gap: 10px; }
-        .message { padding: 15px 20px; border-radius: 5px; border-left-width: 5px; border-left-style: solid; box-shadow: 0 2px 10px rgba(0,0,0,0.1); opacity: 0; transform: translateX(100%); animation: slideIn 0.5s forwards; }
-        @keyframes slideIn { to { opacity: 1; transform: translateX(0); } }
-        .success-message { background-color: #d4edda; color: #155724; border-left-color: #28a745; }
-        .error-message { background-color: #f8d7da; color: #721c24; border-left-color: #dc3545; }
-        .status-badge { padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600; text-transform: capitalize; }
-        .status-active { background-color: #d4edda; color: #14532d; } .status-breeding { background-color: #fff3cd; color: #664d03; } .status-sold { background-color: #f8d7da; color: #721c24; } .status-deceased { background-color: #e2e3e5; color: #383d41; } .status-paired { background-color: #d1ecf1; color: #08424e; } .status-laying { background-color: #fff3cd; color: #664d03; } .status-incubating { background-color: #ffeaa7; color: #5849be; } .status-feeding { background-color: #fde2e4; color: #900c3f; } .status-inactive { background-color: #e2e3e5; color: #383d41; }
-        .dashboard-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
-        .stat-card { background: white; padding: 1.5rem; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); text-align: center; }
-        .stat-card i { font-size: 2rem; color: #667eea; margin-bottom: .75rem; }
-        .stat-card .stat-number { font-size: 2.5rem; font-weight: 600; color: #333; }
-        .stat-card .stat-title { font-size: .9rem; color: #666; }
-        
-        @media print {
-            body * { visibility: hidden; }
-            #report-modal .modal-content, #report-modal .modal-content * { visibility: visible; }
-            #report-modal { position: absolute; left: 0; top: 0; }
-            #report-modal .modal-content { max-width: 100%; box-shadow: none; border: 1px solid #ccc; }
-            #report-modal .form-buttons, #report-modal .close-modal { display: none; }
-        }
-        #report-content h3 { margin-bottom: 1rem; border-bottom: 1px solid #eee; padding-bottom: .5rem; }
-        #report-content h4 { margin-top: 1.5rem; margin-bottom: .5rem; }
-        #report-content table { box-shadow: none; border: 1px solid #ddd; }
-        @media (max-width: 768px) {
-            header { flex-direction: column; gap: 1rem; text-align: center; }
-            main { padding: 1rem; }
-            .search-container input { width: 200px; }
-            .modal-content { margin: 5% auto; padding: 1.5rem; }
-            .form-row, .details-row { grid-template-columns: 1fr; }
-        }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="app-container">
         <header>
-            <h1><img src="https://i.imgur.com/kqAORaz.png" alt="Haute Volière Pro Logo"> Haute Volière Pro</h1>
-            <button id="backup-prompt"><i class="fas fa-exclamation-triangle"></i> Backup Recommended</button>
+            <div class="header-main">
+                <h1><img src="logo.png" alt="Haute Volière Pro Logo"> Haute Volière Pro</h1>
+            </div>
+            <div id="import-prompt" class="header-prompt">
+                <span>Recent backup found.</span>
+                <button id="import-from-prompt-btn">Import</button>
+                <button id="dismiss-import-prompt-btn">Dismiss</button>
+            </div>
+            <div id="backup-prompt" class="header-prompt">
+                <span><i class="fas fa-exclamation-triangle"></i> Changes detected.</span>
+                <button id="backup-now-btn">Backup Now</button>
+            </div>
         </header>
         <nav>
             <ul role="tablist">
@@ -138,22 +40,33 @@
             <div id="message-container"></div>
 
             <div id="dashboard-view" class="view active" role="tabpanel">
+                <div id="notifications-container">
+                    <h2><i class="fas fa-bell"></i> Upcoming Tasks</h2>
+                    <ul id="notification-list" class="notification-list"></ul>
+                </div>
+                
                 <div class="dashboard-stats">
-                    <div class="stat-card"><i class="fas fa-dove"></i><div id="total-pigeons-stat" class="stat-number">0</div><div class="stat-title">Total Pigeons</div></div>
-                    <div class="stat-card"><i class="fas fa-mars"></i><div id="total-cocks-stat" class="stat-number">0</div><div class="stat-title">Cocks</div></div>
-                    <div class="stat-card"><i class="fas fa-venus"></i><div id="total-hens-stat" class="stat-number">0</div><div class="stat-title">Hens</div></div>
-                    <div class="stat-card"><i class="fas fa-baby"></i><div id="total-young-stat" class="stat-number">0</div><div class="stat-title">Young (This Year)</div></div>
-                    <div class="stat-card"><i class="fas fa-users"></i><div id="total-pairs-stat" class="stat-number">0</div><div class="stat-title">Breeding Pairs</div></div>
+                    <div class="stat-card" data-view="pigeons"><i class="fas fa-dove"></i><div id="total-pigeons-stat" class="stat-number">0</div><div class="stat-title">Total Pigeons</div></div>
+                    <div class="stat-card" data-view="pigeons"><i class="fas fa-mars"></i><div id="total-cocks-stat" class="stat-number">0</div><div class="stat-title">Cocks</div></div>
+                    <div class="stat-card" data-view="pigeons"><i class="fas fa-venus"></i><div id="total-hens-stat" class="stat-number">0</div><div class="stat-title">Hens</div></div>
+                    <div class="stat-card" data-view="pigeons"><i class="fas fa-baby"></i><div id="total-young-stat" class="stat-number">0</div><div class="stat-title">Young (This Year)</div></div>
+                    <div class="stat-card" data-view="breeding"><i class="fas fa-users"></i><div id="total-pairs-stat" class="stat-number">0</div><div class="stat-title">Breeding Pairs</div></div>
                 </div>
             </div>
 
             <div id="pigeons-view" class="view" role="tabpanel">
-                <div class="controls"><button id="add-pigeon-btn" class="primary-btn"><i class="fas fa-plus"></i> Add Pigeon</button><div class="search-container"><input type="text" id="search-pigeons" placeholder="Search pigeons..." aria-label="Search pigeons"><i class="fas fa-search"></i></div></div>
+                <div class="controls">
+                    <div class="controls-left">
+                        <button id="add-pigeon-btn" class="primary-btn"><i class="fas fa-plus"></i> Add Pigeon</button>
+                        <div id="pigeon-count-display" class="view-stat"></div>
+                    </div>
+                    <div class="search-container"><input type="text" id="search-pigeons" placeholder="Search pigeons..." aria-label="Search pigeons"><i class="fas fa-search"></i></div>
+                </div>
                 <div class="table-wrapper">
                     <table id="pigeons-table">
-                        <!-- MODIFIED: Added data-sort attributes and spans for indicators -->
                         <thead>
                             <tr>
+                                <th>Image</th>
                                 <th data-sort="bandNumber" role="button" tabindex="0">Band #<span class="sort-indicator"></span></th>
                                 <th>Name</th>
                                 <th data-sort="gender" role="button" tabindex="0">Gender<span class="sort-indicator"></span></th>
@@ -170,13 +83,36 @@
             </div>
             
             <div id="breeding-view" class="view" role="tabpanel">
-                <h2>Breeding Records</h2><div class="controls"><button id="add-pair-btn" class="primary-btn"><i class="fas fa-plus"></i> Add Breeding Pair</button></div>
-                <table id="pairs-table"><thead><tr><th>Pair ID</th><th>Cock</th><th>Hen</th><th>Nest Box</th><th>Status</th><th>Eggs Laid</th><th>Est. Hatch Date</th><th>Hatched</th><th>Actions</th></tr></thead><tbody></tbody></table>
+                <h2>Breeding Records</h2>
+                <div class="controls"><button id="add-pair-btn" class="primary-btn"><i class="fas fa-plus"></i> Add Breeding Pair</button></div>
+                <div class="table-wrapper">
+                    <table id="pairs-table">
+                        <thead>
+                            <tr>
+                                <th>Pair ID</th>
+                                <th>Cock</th>
+                                <th>Hen</th>
+                                <th>Nest Box</th>
+                                <th>Status</th>
+                                <th>Eggs Laid</th>
+                                <th>Egg Check Date</th>
+                                <th>Activated Eggs</th>
+                                <th>Est. Hatch Date</th>
+                                <th>Hatched</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
             </div>
             
             <div id="health-view" class="view" role="tabpanel">
-                <h2>Health Records</h2><div class="controls"><button id="add-health-record-btn" class="primary-btn"><i class="fas fa-plus"></i> Add Health Record</button></div>
-                <table id="health-table"><thead><tr><th>Pigeon</th><th>Date</th><th>Type</th><th>Description</th><th>Treatment</th><th>Actions</th></tr></thead><tbody></tbody></table>
+                <h2>Health Records</h2>
+                <div class="controls"><button id="add-health-record-btn" class="primary-btn"><i class="fas fa-plus"></i> Add Health Record</button></div>
+                <div class="table-wrapper">
+                    <table id="health-table"><thead><tr><th>Pigeon</th><th>Date</th><th>Type</th><th>Description</th><th>Treatment</th><th>Actions</th></tr></thead><tbody></tbody></table>
+                </div>
             </div>
             
             <div id="reports-view" class="view" role="tabpanel">
@@ -191,8 +127,71 @@
             <div id="settings-view" class="view" role="tabpanel">
                 <h2>Settings</h2>
                 <div class="settings-container">
-                    <div class="settings-section"><h3>Loft Information</h3><form id="loft-info-form"><div class="form-group"><label for="loft-name">Loft Name:</label><input type="text" id="loft-name" placeholder="Enter loft name"></div><div class="form-group"><label for="owner-name">Owner Name:</label><input type="text" id="owner-name" placeholder="Enter owner name"></div><div class="form-group"><label for="location">Location:</label><input type="text" id="location" placeholder="Enter location"></div><button type="submit" class="primary-btn">Save</button></form></div>
-                    <div class="settings-section"><h3>Data Management</h3><input type="file" id="import-file-input" accept="application/json" style="display:none;"><button id="export-data" class="secondary-btn"><i class="fas fa-download"></i> Export Data</button><button id="import-data" class="secondary-btn"><i class="fas fa-upload"></i> Import Data</button><button id="clear-data" class="danger-btn"><i class="fas fa-trash"></i> Clear All Data</button></div>
+                    <div class="settings-section">
+                        <h3>Loft Information</h3>
+                        <form id="loft-info-form">
+                            <div class="form-group"><label for="loft-name">Loft Name:</label><input type="text" id="loft-name" placeholder="Enter loft name"></div>
+                            <div class="form-group"><label for="owner-name">Owner Name:</label><input type="text" id="owner-name" placeholder="Enter owner name"></div>
+                            <div class="form-group"><label for="location">Location:</label><input type="text" id="location" placeholder="Enter location"></div>
+                            <button type="submit" class="primary-btn" style="margin-top: 1rem;">Save</button>
+                        </form>
+                    </div>
+                    <div class="settings-section">
+                        <h3>Breeding Notifications</h3>
+                        <form id="breeding-settings-form">
+                            <div class="form-group theme-switch-wrapper">
+                                <label for="notifications-enabled">Enable Notifications</label>
+                                <label class="theme-switch">
+                                    <input type="checkbox" id="notifications-enabled" />
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="form-group">
+                                <label for="notification-window">Show tasks due in the next (days):</label>
+                                <input type="number" id="notification-window" min="0">
+                            </div>
+                            <div class="form-group theme-switch-wrapper">
+                                <label for="show-overdue-tasks">Show Overdue Tasks</label>
+                                <label class="theme-switch">
+                                    <input type="checkbox" id="show-overdue-tasks" />
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <hr style="margin: 1.5rem 0; border: none; border-top: 1px solid var(--border-color);">
+                            <div class="form-group">
+                                <label for="egg-check-days">Days to Check Eggs:</label>
+                                <input type="number" id="egg-check-days" min="1">
+                            </div>
+                             <div class="form-group">
+                                <label for="hatching-days">Days to Hatch:</label>
+                                <input type="number" id="hatching-days" min="1">
+                            </div>
+                             <div class="form-group">
+                                <label for="ringing-days">Days to Ring:</label>
+                                <input type="number" id="ringing-days" min="1">
+                            </div>
+                            <button type="submit" class="primary-btn" style="margin-top: 1rem;">Save</button>
+                        </form>
+                    </div>
+                    <div class="settings-section">
+                        <h3>Data Management</h3>
+                        <input type="file" id="import-file-input" accept="application/json" style="display:none;">
+                        <div class="data-buttons">
+                            <button id="export-data" class="secondary-btn"><i class="fas fa-download"></i> Export Data</button>
+                            <button id="import-data" class="secondary-btn"><i class="fas fa-upload"></i> Import Data</button>
+                            <button id="clear-data" class="danger-btn"><i class="fas fa-trash"></i> Clear All Data</button>
+                        </div>
+                    </div>
+                    <div class="settings-section">
+                        <h3>Appearance</h3>
+                        <div class="theme-switch-wrapper">
+                            <span>Dark Mode</span>
+                            <label class="theme-switch" for="theme-toggle">
+                                <input type="checkbox" id="theme-toggle" />
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
                 </div>
             </div>
         </main>
@@ -204,34 +203,80 @@
             <span class="close-modal" role="button" aria-label="Close">×</span>
             <h2 id="pigeon-modal-title">Add New Pigeon</h2>
             <form id="pigeon-form" novalidate>
+                <h3 class="form-section-header">Basic Information</h3>
                 <div class="form-row">
-                    <div class="form-group"><label for="band-number">Band Number:</label><input type="text" id="band-number" required></div>
-                    <div class="form-group"><label for="pigeon-name">Name (optional):</label><input type="text" id="pigeon-name"></div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group"><label for="gender">Gender:</label><select id="gender" required><option value="">Select Gender</option><option value="cock">Cock</option><option value="hen">Hen</option><option value="unknown">Unknown</option></select></div>
-                    <div class="form-group"><label for="color">Color:</label><input type="text" id="color"></div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group"><label for="hatch-date">Hatch Date:</label><input type="date" id="hatch-date"></div>
-                    <div class="form-group"><label for="strain">Strain/Breed:</label><input type="text" id="strain"></div>
+                    <div class="form-group">
+                        <label for="band-number">Band #:</label>
+                        <input type="text" id="band-number" name="bandNumber" required placeholder="e.g., AU-2024-1234">
+                    </div>
+                    <div class="form-group">
+                        <label for="pigeon-name">Name:</label>
+                        <input type="text" id="pigeon-name" name="name" placeholder="e.g., Champion">
+                    </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
+                        <label for="gender">Gender:</label>
+                        <select id="gender" name="gender" required>
+                            <option value="">Select Gender</option>
+                            <option value="young">Young</option>
+                            <option value="cock">Cock</option>
+                            <option value="hen">Hen</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="color">Color:</label>
+                        <input type="text" id="color" name="color" placeholder="e.g., Blue Bar">
+                    </div>
+                </div>
+                <div class="form-row">
+                     <div class="form-group">
+                        <label for="hatch-date">Hatch Date:</label>
+                        <input type="date" id="hatch-date" name="hatchDate">
+                    </div>
+                    <div class="form-group">
+                        <label for="strain">Strain / Lineage:</label>
+                        <input type="text" id="strain" name="strain" placeholder="e.g., Janssen, Gaby">
+                    </div>
+                </div>
+
+                <h3 class="form-section-header">Pedigree</h3>
+                 <div class="form-row">
+                    <div class="form-group">
                         <label for="sire-select">Sire (Father):</label>
-                        <select id="sire-select"><option value="">Select Sire</option></select>
+                        <select id="sire-select" name="sireId"><option value="">Select Sire</option></select>
                     </div>
                     <div class="form-group">
                         <label for="dam-select">Dam (Mother):</label>
-                        <select id="dam-select"><option value="">Select Dam</option></select>
+                        <select id="dam-select" name="damId"><option value="">Select Dam</option></select>
                     </div>
                 </div>
-                <div class="form-row">
-                    <div class="form-group"><label for="status">Status:</label><select id="status"><option value="active">Active</option><option value="breeding">Breeding</option><option value="sold">Sold</option><option value="deceased">Deceased</option></select></div>
-                    <div class="form-group"><label for="section">Loft Section:</label><input type="text" id="section"></div>
+
+                <h3 class="form-section-header">Loft Details</h3>
+                <div class="form-group">
+                    <label for="image-url">Image URL:</label>
+                    <input type="text" id="image-url" name="imageURL" placeholder="Paste link from Imgur, etc.">
                 </div>
-                <div class="form-group"><label for="notes">Notes:</label><textarea id="notes" rows="3"></textarea></div>
-                <div class="form-group"><label for="pigeon-image">Image:</label><input type="file" id="pigeon-image" accept="image/*"></div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="status">Status:</label>
+                        <select id="status" name="status">
+                            <option value="active">Active</option>
+                            <option value="breeding">Breeding</option>
+                            <option value="sold">Sold</option>
+                            <option value="deceased">Deceased</option>
+                        </select>
+                    </div>
+                     <div class="form-group">
+                        <label for="section">Loft Section:</label>
+                        <input type="text" id="section" name="section" placeholder="e.g., Old Birds, Stock">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="notes">Notes:</label>
+                    <textarea id="notes" name="notes" rows="4"></textarea>
+                </div>
                 <div class="form-buttons">
                     <button type="submit" class="primary-btn">Save Pigeon</button>
                     <button type="button" class="secondary-btn cancel-btn">Cancel</button>
@@ -239,466 +284,101 @@
             </form>
         </div>
     </div>
-    
-    <div id="pigeon-details-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="details-modal-title">
-        <div class="modal-content">
+
+    <!-- Pedigree Modal -->
+    <div id="pedigree-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="pedigree-modal-title">
+        <div class="modal-content pedigree-modal-content">
             <span class="close-modal" role="button" aria-label="Close">×</span>
-            <h2 id="details-modal-title" style="margin-bottom: 1.5rem;">Pigeon Details</h2>
-            <div class="details-row">
-                <div class="details-group"><span class="details-group-label">Band Number</span><span id="details-band-number" class="details-group-value"></span></div>
-                <div class="details-group"><span class="details-group-label">Name</span><span id="details-name" class="details-group-value"></span></div>
-            </div>
-            <div class="details-row">
-                <div class="details-group"><span class="details-group-label">Gender</span><span id="details-gender" class="details-group-value"></span></div>
-                <div class="details-group"><span class="details-group-label">Color</span><span id="details-color" class="details-group-value"></span></div>
-            </div>
-            <div class="details-row">
-                <div class="details-group"><span class="details-group-label">Hatch Date</span><span id="details-hatch-date" class="details-group-value"></span></div>
-                <div class="details-group"><span class="details-group-label">Strain</span><span id="details-strain" class="details-group-value"></span></div>
-            </div>
-            <h3 class="form-section-header">Pedigree</h3>
-            <div class="details-row">
-                <div class="details-group"><span class="details-group-label">Sire (Father)</span><span id="details-sire" class="details-group-value"></span></div>
-                <div class="details-group"><span class="details-group-label">Dam (Mother)</span><span id="details-dam" class="details-group-value"></span></div>
+            <h2 id="pedigree-modal-title">3-Generation Pedigree</h2>
+            <div id="pedigree-chart-container">
+                <!-- Pedigree will be generated here by JavaScript -->
             </div>
             <div class="form-buttons">
                 <button type="button" class="secondary-btn cancel-btn">Close</button>
             </div>
         </div>
     </div>
-    
-    <div id="breeding-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="breeding-modal-title"><div class="modal-content"><span class="close-modal" role="button" aria-label="Close">×</span><h2 id="breeding-modal-title">Add Breeding Pair</h2><form id="breeding-form" novalidate><h3 class="form-section-header">Pair Details</h3><div class="form-row"><div class="form-group"><label for="cock-select">Cock:</label><select id="cock-select" required><option value="">Select Cock</option></select></div><div class="form-group"><label for="hen-select">Hen:</label><select id="hen-select" required><option value="">Select Hen</option></select></div></div><div class="form-row"><div class="form-group"><label for="nest-box">Nest Box:</label><input type="text" id="nest-box"></div><div class="form-group"><label for="pairing-date">Pairing Date:</label><input type="date" id="pairing-date"></div></div><div class="form-row"><div class="form-group"><label for="pair-status">Status:</label><select id="pair-status"><option value="paired">Paired</option><option value="laying">Laying</option><option value="incubating">Incubating</option><option value="feeding">Feeding Young</option><option value="inactive">Inactive</option></select></div></div><h3 class="form-section-header">Egg & Hatching Details</h3><div class="form-row"><div class="form-group"><label for="first-egg-date">Date of First Egg:</label><input type="date" id="first-egg-date"></div></div><div class="form-row"><div class="form-group"><label for="activation-date">Est. Activation Date:</label><input type="text" id="activation-date" class="readonly-input" readonly></div><div class="form-group"><label for="activation-days">Days After 1st Egg:</label><input type="number" id="activation-days" value="8" style="width: 70px;"></div><div class="form-group"><label for="activated-eggs"># Laid Eggs:</label><input type="number" id="activated-eggs" min="0"></div></div><div class="form-row"><div class="form-group"><label for="hatching-date">Est. Hatching Date:</label><input type="text" id="hatching-date" class="readonly-input" readonly></div><div class="form-group"><label for="hatching-days">Days After 1st Egg:</label><input type="number" id="hatching-days" value="20" style="width: 70px;"></div><div class="form-group"><label for="hatched-eggs"># Hatched Eggs:</label><input type="number" id="hatched-eggs" min="0"></div></div><div class="form-row"><div class="form-group"><label for="ring-date">Est. Ring Date:</label><input type="text" id="ring-date" class="readonly-input" readonly></div><div class="form-group"><label for="ring-days">Days After 1st Egg:</label><input type="number" id="ring-days" value="28" style="width: 70px;"></div></div><div class="form-group"><label for="pair-notes">Notes:</label><textarea id="pair-notes" rows="3"></textarea></div><div class="form-buttons"><button type="submit" class="primary-btn">Save Pair</button><button type="button" class="secondary-btn cancel-btn">Cancel</button></div></form></div></div>
+
+    <!-- Offspring Modal -->
+    <div id="offspring-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="offspring-modal-title">
+        <div class="modal-content">
+            <span class="close-modal" role="button" aria-label="Close">×</span>
+            <h2 id="offspring-modal-title">Offspring</h2>
+            <div id="offspring-list-container">
+                <!-- Offspring list will be generated here by JavaScript -->
+            </div>
+            <div class="form-buttons">
+                <button type="button" class="secondary-btn cancel-btn">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="breeding-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="breeding-modal-title">
+        <div class="modal-content">
+            <span class="close-modal" role="button" aria-label="Close">×</span>
+            <h2 id="breeding-modal-title">Add Breeding Pair</h2>
+            <form id="breeding-form" novalidate>
+                <h3 class="form-section-header">Pair Details</h3>
+                <div class="form-row">
+                    <div class="form-group"><label for="cock-select">Cock:</label><select id="cock-select" required><option value="">Select Cock</option></select></div>
+                    <div class="form-group"><label for="hen-select">Hen:</label><select id="hen-select" required><option value="">Select Hen</option></select></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label for="nest-box">Nest Box:</label><input type="text" id="nest-box"></div>
+                    <div class="form-group"><label for="pairing-date">Pairing Date:</label><input type="date" id="pairing-date"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label for="pair-status">Status:</label><select id="pair-status"><option value="paired">Paired</option><option value="laying">Laying</option><option value="incubating">Incubating</option><option value="feeding">Feeding Young</option><option value="inactive">Inactive</option></select></div>
+                </div>
+
+                <h3 class="form-section-header">Egg & Hatching Details</h3>
+                <div class="form-row">
+                    <div class="form-group"><label for="first-egg-date">Date of First Egg:</label><input type="date" id="first-egg-date"></div>
+                    <div class="form-group"><label for="eggs-laid"># Laid Eggs:</label><input type="number" id="eggs-laid" min="0"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label for="activation-date">Est. Activation Date:</label><input type="text" id="activation-date" class="readonly-input" readonly></div>
+                    <div class="form-group"><label for="activation-days">Days After 1st Egg:</label><input type="number" id="activation-days" min="1" style="width: 70px;"></div>
+                    <div class="form-group"><label for="activated-eggs">Activated Eggs (Fertile):</label><input type="number" id="activated-eggs" min="0"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label for="hatching-date">Est. Hatching Date:</label><input type="text" id="hatching-date" class="readonly-input" readonly></div>
+                    <div class="form-group"><label for="hatching-days">Days After 1st Egg:</label><input type="number" id="hatching-days" min="1" style="width: 70px;"></div>
+                    <div class="form-group"><label for="hatched-eggs"># Hatched Eggs:</label><input type="number" id="hatched-eggs" min="0"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label for="ring-date">Est. Ring Date:</label><input type="text" id="ring-date" class="readonly-input" readonly></div>
+                    <div class="form-group"><label for="ring-days">Days After 1st Egg:</label><input type="number" id="ring-days" min="1" style="width: 70px;"></div>
+                </div>
+                <div class="form-group">
+                    <label for="pair-notes">Notes:</label><textarea id="pair-notes" rows="3"></textarea>
+                </div>
+                <div class="form-buttons">
+                    <button type="submit" class="primary-btn">Save Pair</button>
+                    <button type="button" class="secondary-btn cancel-btn">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div id="health-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="health-modal-title"><div class="modal-content"><span class="close-modal" role="button" aria-label="Close">×</span><h2 id="health-modal-title">Add Health Record</h2><form id="health-form" novalidate><div class="form-row"><div class="form-group"><label for="health-pigeon-select">Pigeon:</label><select id="health-pigeon-select" required><option value="">Select a Pigeon</option></select></div><div class="form-group"><label for="health-date">Date:</label><input type="date" id="health-date" required></div></div><div class="form-row"><div class="form-group"><label for="health-type">Record Type:</label><select id="health-type" required><option value="">Select Type</option><option value="vaccination">Vaccination</option><option value="deworming">Deworming</option><option value="treatment">Treatment</option><option value="checkup">Check-up</option><option value="injury">Injury</option></select></div></div><div class="form-group"><label for="health-description">Description:</label><textarea id="health-description" rows="2" placeholder="e.g., PMV vaccine, Canker treatment"></textarea></div><div class="form-group"><label for="health-treatment">Treatment/Medication:</label><textarea id="health-treatment" rows="2" placeholder="e.g., 1 tablet Spartrix, Baycox 2 days"></textarea></div><div class="form-buttons"><button type="submit" class="primary-btn">Save Record</button><button type="button" class="secondary-btn cancel-btn">Cancel</button></div></form></div></div>
-    <div id="report-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="report-modal-title"><div class="modal-content"><span class="close-modal" role="button" aria-label="Close">×</span><h2 id="report-modal-title" style="margin-bottom: 1.5rem;">Report</h2><div id="report-content"></div><div class="form-buttons"><button type="button" id="print-report-btn" class="primary-btn"><i class="fas fa-print"></i> Print Report</button><button type="button" class="secondary-btn cancel-btn">Close</button></div></div></div>
+        <div id="report-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="report-modal-title"><div class="modal-content"><span class="close-modal" role="button" aria-label="Close">×</span><h2 id="report-modal-title">Report</h2><div id="report-content"></div><div class="form-buttons"><button type="button" id="print-report-btn" class="primary-btn"><i class="fas fa-print"></i> Print Report</button><button type="button" class="secondary-btn cancel-btn">Close</button></div></div></div>
 
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        let pigeons = [], breedingPairs = [], healthRecords = [], loftInfo = {};
-        let currentEditingPigeon = null, currentEditingPair = null, currentEditingHealth = null;
-        let lastFocusedElement = null;
-        let dataHasChanged = false;
-        // NEW: State for sorting
-        let currentSort = { column: 'bandNumber', direction: 'asc' };
+    <!-- Image Lightbox Modal -->
+    <div id="image-lightbox-modal" class="lightbox-modal">
+        <span class="close-lightbox">×</span>
+        <img class="lightbox-content" id="lightbox-image">
+    </div>
 
-        function initializeApp() {
-            loadData();
-            performSortAndRedraw(); // Sort data on initial load
-            initializeEventListeners();
-            updateAllTables(); // This will render the initially sorted data
-            updateLoftInfoForm();
-            setupDateCalculations();
-            updateDashboard();
-            switchView('dashboard');
-            updateBackupPromptUI();
-        }
+    <footer>
+        <div class="footer-social-links">
+            <a href="mailto:hvolierebf@gmail.com" title="Email" target="_blank" rel="noopener noreferrer"><i class="fas fa-envelope"></i></a>
+            <a href="https://wa.me/22678916975" title="WhatsApp" target="_blank" rel="noopener noreferrer"><i class="fab fa-whatsapp"></i></a>
+            <a href="https://www.facebook.com/share/16GGuejEpM/" title="Facebook" target="_blank" rel="noopener noreferrer"><i class="fab fa-facebook"></i></a>
+        </div>
+        <p>© 2025 Haute Volière Pro | Version 1.1.0</p>
+    </footer>
 
-        function loadData() {
-            pigeons = JSON.parse(localStorage.getItem('pigeons')) || [{ id: Date.now() + 1, bandNumber: 'AU-2024-001', name: 'Champion', gender: 'cock', color: 'Blue Bar', hatchDate: '2024-03-15', strain: 'Janssen', status: 'active' }, { id: Date.now() + 2, bandNumber: 'AU-2024-002', name: 'Beauty', gender: 'hen', color: 'Red Check', hatchDate: '2024-03-20', strain: 'Vandenabeele', status: 'breeding' }];
-            breedingPairs = JSON.parse(localStorage.getItem('breedingPairs')) || [];
-            healthRecords = JSON.parse(localStorage.getItem('healthRecords')) || [];
-            loftInfo = JSON.parse(localStorage.getItem('loftInfo')) || {};
-        }
-
-        function saveData() {
-            localStorage.setItem('pigeons', JSON.stringify(pigeons));
-            localStorage.setItem('breedingPairs', JSON.stringify(breedingPairs));
-            localStorage.setItem('healthRecords', JSON.stringify(healthRecords));
-            localStorage.setItem('loftInfo', JSON.stringify(loftInfo));
-            dataHasChanged = true;
-            updateBackupPromptUI();
-            updateDashboard();
-        }
-        
-        function updateAllTables() { updatePigeonTable(); updateBreedingTable(); updateHealthTable(); }
-        function updateLoftInfoForm() { document.getElementById('loft-name').value = loftInfo.name || ''; document.getElementById('owner-name').value = loftInfo.owner || ''; document.getElementById('location').value = loftInfo.location || ''; }
-
-        function initializeEventListeners() {
-            document.querySelector('nav ul').addEventListener('click', (e) => { const target = e.target.closest('li[role="tab"]'); if (target) switchView(target.getAttribute('data-view')); });
-            document.getElementById('add-pigeon-btn').addEventListener('click', () => openPigeonModal());
-            document.getElementById('add-pair-btn').addEventListener('click', () => openBreedingModal());
-            document.getElementById('add-health-record-btn').addEventListener('click', () => openHealthModal());
-            document.getElementById('pigeon-form').addEventListener('submit', savePigeon);
-            document.getElementById('breeding-form').addEventListener('submit', saveBreedingPair);
-            document.getElementById('health-form').addEventListener('submit', saveHealthRecord);
-            document.getElementById('loft-info-form').addEventListener('submit', (e) => { e.preventDefault(); loftInfo = { name: document.getElementById('loft-name').value, owner: document.getElementById('owner-name').value, location: document.getElementById('location').value }; saveData(); showMessage('Loft information saved!', 'success'); });
-            document.querySelectorAll('.modal').forEach(modal => { modal.addEventListener('click', (e) => { if (e.target === modal || e.target.classList.contains('close-modal') || e.target.classList.contains('cancel-btn')) closeModal(modal.id); }); });
-            document.getElementById('search-pigeons').addEventListener('input', (e) => filterPigeons(e.target.value.toLowerCase()));
-            document.querySelectorAll('[data-report]').forEach(btn => btn.addEventListener('click', (e) => generateReport(e.target.dataset.report)));
-            document.getElementById('print-report-btn').addEventListener('click', () => window.print());
-            
-            document.getElementById('backup-prompt').addEventListener('click', exportData);
-            document.getElementById('export-data').addEventListener('click', exportData);
-            document.getElementById('import-data').addEventListener('click', () => document.getElementById('import-file-input').click());
-            document.getElementById('import-file-input').addEventListener('change', importData);
-            document.getElementById('clear-data').addEventListener('click', () => { if (confirm('Are you sure? This will delete all data.')) { localStorage.clear(); pigeons = []; breedingPairs = []; healthRecords = []; loftInfo = {}; updateAllTables(); updateLoftInfoForm(); saveData(); showMessage('All data has been cleared.', 'success'); } });
-            
-            // NEW: Event listener for sorting
-            document.querySelector('#pigeons-table thead').addEventListener('click', (e) => {
-                const header = e.target.closest('th[data-sort]');
-                if (header) {
-                    handleSortClick(header.dataset.sort);
-                }
-            });
-
-            window.addEventListener('beforeunload', (e) => {
-                if (dataHasChanged) {
-                    e.preventDefault();
-                    e.returnValue = '';
-                }
-            });
-        }
-        
-        function switchView(viewName) {
-            document.querySelectorAll('.view').forEach(view => view.classList.remove('active'));
-            document.getElementById(viewName + '-view').classList.add('active');
-            document.querySelectorAll('nav li[role="tab"]').forEach(item => { item.setAttribute('aria-selected', item.getAttribute('data-view') === viewName); });
-        }
-
-        function openModal(modalId) {
-            lastFocusedElement = document.activeElement;
-            const modal = document.getElementById(modalId);
-            modal.classList.add('is-open');
-            const focusable = modal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
-            modal.addEventListener('keydown', (e) => handleModalFocus(e, focusable[0], focusable[focusable.length - 1]));
-            focusable[0]?.focus();
-        }
-
-        function closeModal(modalId) { document.getElementById(modalId).classList.remove('is-open'); lastFocusedElement?.focus(); }
-        function handleModalFocus(e, firstEl, lastEl) { if (e.key === 'Tab') { if (e.shiftKey) { if (document.activeElement === firstEl) { lastEl.focus(); e.preventDefault(); } } else { if (document.activeElement === lastEl) { firstEl.focus(); e.preventDefault(); } } } }
-        
-        function openPigeonModal(pigeon = null) {
-            document.getElementById('pigeon-form').reset();
-            currentEditingPigeon = pigeon;
-            document.getElementById('pigeon-modal-title').textContent = pigeon ? 'Edit Pigeon' : 'Add New Pigeon';
-            
-            populateParentSelects(pigeon ? pigeon.id : null);
-
-            if (pigeon) {
-                populatePigeonForm(pigeon);
-            }
-            openModal('pigeon-modal');
-        }
-
-        function openBreedingModal(pair = null) {
-            document.getElementById('breeding-form').reset();
-            populateBreedingSelects();
-            currentEditingPair = pair;
-            document.getElementById('breeding-modal-title').textContent = pair ? 'Edit Breeding Pair' : 'Add Breeding Pair';
-            if (pair) populateBreedingForm(pair);
-            updateCalculatedDates();
-            openModal('breeding-modal');
-        }
-        
-        function openHealthModal(record = null) {
-            document.getElementById('health-form').reset();
-            populateAllPigeonSelect('health-pigeon-select');
-            currentEditingHealth = record;
-            document.getElementById('health-modal-title').textContent = record ? 'Edit Health Record' : 'Add Health Record';
-            if (record) populateHealthForm(record);
-            openModal('health-modal');
-        }
-
-        function savePigeon(e) {
-            e.preventDefault();
-            const bandNumber = document.getElementById('band-number').value.trim();
-            const gender = document.getElementById('gender').value;
-            if (!bandNumber || !gender) { showMessage('Band Number and Gender are required.', 'error'); return; }
-
-            const pigeonData = {
-                id: currentEditingPigeon ? currentEditingPigeon.id : Date.now(),
-                bandNumber, gender,
-                name: document.getElementById('pigeon-name').value.trim(),
-                color: document.getElementById('color').value.trim(),
-                hatchDate: document.getElementById('hatch-date').value,
-                strain: document.getElementById('strain').value.trim(),
-                status: document.getElementById('status').value,
-                section: document.getElementById('section').value.trim(),
-                notes: document.getElementById('notes').value.trim(),
-                sireId: document.getElementById('sire-select').value || '',
-                damId: document.getElementById('dam-select').value || ''
-            };
-
-            if (currentEditingPigeon) {
-                pigeons[pigeons.findIndex(p => p.id === currentEditingPigeon.id)] = pigeonData;
-            } else {
-                pigeons.push(pigeonData);
-            }
-            showMessage(`Pigeon ${currentEditingPigeon ? 'updated' : 'added'}!`, 'success');
-            performSortAndRedraw(); // Re-sort and re-draw the table
-            saveData();
-            closeModal('pigeon-modal');
-        }
-
-        function updatePigeonTable() {
-            const tbody = document.querySelector('#pigeons-table tbody');
-            tbody.innerHTML = '';
-            // Data is already sorted by performSortAndRedraw, just render it
-            pigeons.forEach(p => {
-                const sire = pigeons.find(sire => sire.id == p.sireId);
-                const dam = pigeons.find(dam => dam.id == p.damId);
-
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${p.bandNumber}</td>
-                    <td>${p.name||'-'}</td>
-                    <td>${p.gender}</td>
-                    <td>${formatDateForDisplay(p.hatchDate)}</td>
-                    <td>${sire ? sire.bandNumber : '-'}</td>
-                    <td>${dam ? dam.bandNumber : '-'}</td>
-                    <td><span class="status-badge status-${p.status}">${p.status}</span></td>
-                    <td>
-                        <div class="actions-cell">
-                            <button class="secondary-btn" style="padding:5px 10px;font-size:12px;" onclick="window.showPigeonDetails(${p.id})">Details</button>
-                            <button class="secondary-btn" style="padding:5px 10px;font-size:12px;" onclick="window.editPigeon(${p.id})">Edit</button>
-                            <button class="danger-btn" style="padding:5px 10px;font-size:12px;" onclick="window.deletePigeon(${p.id})">Delete</button>
-                        </div>
-                    </td>`;
-                tbody.appendChild(row);
-            });
-            updateSortIndicators(); // Ensure indicators are correct
-        }
-        
-        window.showPigeonDetails = (id) => {
-            const pigeon = pigeons.find(p => p.id === id);
-            if (!pigeon) return;
-
-            const sire = pigeons.find(s => s.id == pigeon.sireId);
-            const dam = pigeons.find(d => d.id == pigeon.damId);
-
-            document.getElementById('details-band-number').textContent = pigeon.bandNumber || '-';
-            document.getElementById('details-name').textContent = pigeon.name || '-';
-            document.getElementById('details-gender').textContent = pigeon.gender || '-';
-            document.getElementById('details-color').textContent = pigeon.color || '-';
-            document.getElementById('details-hatch-date').textContent = formatDateForDisplay(pigeon.hatchDate) || '-';
-            document.getElementById('details-strain').textContent = pigeon.strain || '-';
-            document.getElementById('details-sire').textContent = sire ? `${sire.bandNumber} (${sire.name || 'Unnamed'})` : 'N/A';
-            document.getElementById('details-dam').textContent = dam ? `${dam.bandNumber} (${dam.name || 'Unnamed'})` : 'N/A';
-            
-            openModal('pigeon-details-modal');
-        };
-
-        window.editPigeon = (id) => openPigeonModal(pigeons.find(p => p.id === id));
-        window.deletePigeon = (id) => { if (confirm('Are you sure?')) { pigeons = pigeons.filter(p => p.id !== id); performSortAndRedraw(); saveData(); showMessage('Pigeon deleted.', 'success'); } };
-        
-        function populatePigeonForm(pigeon) {
-            for(let key in pigeon) {
-                const el = document.getElementById(key.replace(/([A-Z])/g, '-$1').toLowerCase());
-                if(el) {
-                    el.value = pigeon[key] || '';
-                }
-            }
-            document.getElementById('sire-select').value = pigeon.sireId || '';
-            document.getElementById('dam-select').value = pigeon.damId || '';
-        }
-        
-        function filterPigeons(term) { document.querySelectorAll('#pigeons-table tbody tr').forEach(row => { row.style.display = row.textContent.toLowerCase().includes(term) ? '' : 'none'; }); }
-        
-        // --- NEW SORTING FUNCTIONS ---
-        function handleSortClick(column) {
-            if (currentSort.column === column) {
-                currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
-            } else {
-                currentSort.column = column;
-                currentSort.direction = 'asc';
-            }
-            performSortAndRedraw();
-        }
-
-        function performSortAndRedraw() {
-            const { column, direction } = currentSort;
-            const dir = direction === 'asc' ? 1 : -1;
-
-            pigeons.sort((a, b) => {
-                let valA = a[column];
-                let valB = b[column];
-
-                if (column === 'hatchDate') {
-                    if (!valA) return 1; // Put pigeons without a hatch date at the end
-                    if (!valB) return -1;
-                    return (new Date(valA) - new Date(valB)) * dir;
-                }
-
-                valA = (valA || '').toString();
-                valB = (valB || '').toString();
-                
-                // Use localeCompare with numeric option for smart sorting of band numbers
-                return valA.localeCompare(valB, undefined, { numeric: true, sensitivity: 'base' }) * dir;
-            });
-            updatePigeonTable(); // This will redraw the table with the newly sorted data
-        }
-
-        function updateSortIndicators() {
-            document.querySelectorAll('#pigeons-table th[data-sort]').forEach(th => {
-                th.classList.remove('sorted-asc', 'sorted-desc');
-                if (th.dataset.sort === currentSort.column) {
-                    th.classList.add(currentSort.direction === 'asc' ? 'sorted-asc' : 'sorted-desc');
-                }
-            });
-        }
-        // --- END SORTING FUNCTIONS ---
-
-        function saveBreedingPair(e) {
-            e.preventDefault();
-            const cockId = document.getElementById('cock-select').value, henId = document.getElementById('hen-select').value;
-            if (!cockId || !henId) { showMessage('Please select both a cock and a hen.', 'error'); return; }
-            const pairData = { id: currentEditingPair ? currentEditingPair.id : Date.now(), cockId, henId, nestBox: document.getElementById('nest-box').value, pairingDate: document.getElementById('pairing-date').value, status: document.getElementById('pair-status').value, firstEggDate: document.getElementById('first-egg-date').value, activationDays: document.getElementById('activation-days').value, activatedEggs: document.getElementById('activated-eggs').value, hatchingDays: document.getElementById('hatching-days').value, hatchedEggs: document.getElementById('hatched-eggs').value, ringDays: document.getElementById('ring-days').value, notes: document.getElementById('pair-notes').value };
-            if (currentEditingPair) breedingPairs[breedingPairs.findIndex(p => p.id === currentEditingPair.id)] = pairData; else breedingPairs.push(pairData);
-            showMessage(`Breeding pair ${currentEditingPair ? 'updated' : 'added'}!`, 'success');
-            updateBreedingTable(); saveData(); closeModal('breeding-modal');
-        }
-
-        function updateBreedingTable() {
-            const tbody = document.querySelector('#pairs-table tbody');
-            tbody.innerHTML = '';
-            breedingPairs.forEach(pair => {
-                const cock = pigeons.find(p => p.id == pair.cockId), hen = pigeons.find(p => p.id == pair.henId);
-                const hatchDate = pair.firstEggDate ? addDaysAndFormat(pair.firstEggDate, pair.hatchingDays || 20) : null;
-                const row = document.createElement('tr');
-                row.innerHTML = `<td>BP-${String(pair.id).slice(-4)}</td><td>${cock?cock.bandNumber:'N/A'}</td><td>${hen?hen.bandNumber:'N/A'}</td><td>${pair.nestBox||'-'}</td><td><span class="status-badge status-${pair.status}">${pair.status}</span></td><td>${pair.activatedEggs||'0'}</td><td>${formatDateForDisplay(hatchDate)}</td><td>${pair.hatchedEggs||'0'}</td><td><div class="actions-cell"><button class="secondary-btn" style="padding:5px 10px;font-size:12px;" onclick="window.editBreedingPair(${pair.id})">Edit</button> <button class="danger-btn" style="padding:5px 10px;font-size:12px;" onclick="window.deleteBreedingPair(${pair.id})">Delete</button></div></td>`;
-                tbody.appendChild(row);
-            });
-        }
-        
-        window.editBreedingPair = (id) => openBreedingModal(breedingPairs.find(p => p.id === id));
-        window.deleteBreedingPair = (id) => { if (confirm('Are you sure?')) { breedingPairs = breedingPairs.filter(p => p.id !== id); updateBreedingTable(); saveData(); showMessage('Breeding pair deleted.', 'success'); } };
-        function populateBreedingForm(pair) { populateBreedingSelects(); for(let key in pair) { const el = document.getElementById({cockId:'cock-select',henId:'hen-select'}[key] || key.replace(/([A-Z])/g, '-$1').toLowerCase()); if(el) el.value = pair[key] || ''; } updateCalculatedDates(); }
-        
-        function populateParentSelects(currentPigeonId = null) {
-            const sireSelect = document.getElementById('sire-select');
-            const damSelect = document.getElementById('dam-select');
-
-            sireSelect.innerHTML = '<option value="">Select Sire</option>';
-            damSelect.innerHTML = '<option value="">Select Dam</option>';
-
-            pigeons.forEach(p => {
-                if (p.id === currentPigeonId) return;
-
-                const option = document.createElement('option');
-                option.value = p.id;
-                option.textContent = `${p.bandNumber} - ${p.name || 'Unnamed'}`;
-
-                if (p.gender === 'cock') {
-                    sireSelect.appendChild(option);
-                } else if (p.gender === 'hen') {
-                    damSelect.appendChild(option.cloneNode(true));
-                }
-            });
-        }
-
-        function populateBreedingSelects() {
-            const cockSelect = document.getElementById('cock-select'), henSelect = document.getElementById('hen-select');
-            cockSelect.innerHTML = '<option value="">Select Cock</option>'; henSelect.innerHTML = '<option value="">Select Hen</option>';
-            pigeons.forEach(p => { const option = document.createElement('option'); option.value = p.id; option.textContent = `${p.bandNumber} - ${p.name||'Unnamed'}`; if (p.gender === 'cock') cockSelect.appendChild(option); else if (p.gender === 'hen') henSelect.appendChild(option); });
-        }
-        function populateAllPigeonSelect(selectId) { const select = document.getElementById(selectId); select.innerHTML = '<option value="">Select a Pigeon</option>'; pigeons.forEach(p => { const option = document.createElement('option'); option.value = p.id; option.textContent = `${p.bandNumber} - ${p.name||'Unnamed'}`; select.appendChild(option); }); }
-        
-        function saveHealthRecord(e) {
-            e.preventDefault();
-            const pigeonId = document.getElementById('health-pigeon-select').value, date = document.getElementById('health-date').value, type = document.getElementById('health-type').value;
-            if (!pigeonId || !date || !type) { showMessage('Pigeon, Date, and Type are required.', 'error'); return; }
-            const recordData = { id: currentEditingHealth ? currentEditingHealth.id : Date.now(), pigeonId, date, type, description: document.getElementById('health-description').value, treatment: document.getElementById('health-treatment').value };
-            if (currentEditingHealth) healthRecords[healthRecords.findIndex(r => r.id === currentEditingHealth.id)] = recordData; else healthRecords.push(recordData);
-            showMessage(`Health record ${currentEditingHealth ? 'updated' : 'added'}.`, 'success');
-            updateHealthTable(); saveData(); closeModal('health-modal');
-        }
-
-        function populateHealthForm(record) { document.getElementById('health-pigeon-select').value = record.pigeonId; document.getElementById('health-date').value = record.date; document.getElementById('health-type').value = record.type; document.getElementById('health-description').value = record.description; document.getElementById('health-treatment').value = record.treatment; }
-        function updateHealthTable() {
-            const tbody = document.querySelector('#health-table tbody');
-            tbody.innerHTML = '';
-            healthRecords.forEach(record => {
-                const pigeon = pigeons.find(p => p.id == record.pigeonId);
-                const row = document.createElement('tr');
-                row.innerHTML = `<td>${pigeon?pigeon.bandNumber:'N/A'}</td><td>${formatDateForDisplay(record.date)}</td><td>${record.type}</td><td>${record.description||'-'}</td><td>${record.treatment||'-'}</td><td><div class="actions-cell"><button class="secondary-btn" style="padding:5px 10px;font-size:12px;" onclick="window.editHealthRecord(${record.id})">Edit</button> <button class="danger-btn" style="padding:5px 10px;font-size:12px;" onclick="window.deleteHealthRecord(${record.id})">Delete</button></div></td>`;
-                tbody.appendChild(row);
-            });
-        }
-        
-        window.editHealthRecord = (id) => openHealthModal(healthRecords.find(r => r.id === id));
-        window.deleteHealthRecord = (id) => { if(confirm('Are you sure?')) { healthRecords = healthRecords.filter(r => r.id !== id); updateHealthTable(); saveData(); showMessage('Health record deleted.', 'success'); } };
-        
-        function generateReport(type) {
-            const contentDiv = document.getElementById('report-content'), titleEl = document.getElementById('report-modal-title');
-            let content = '', title = '';
-            if (type === 'inventory') { title = 'Pigeon Inventory Report'; content = `<h3>Total Pigeons: ${pigeons.length}</h3><table><thead><tr><th>Band #</th><th>Name</th><th>Gender</th><th>Hatch Date</th><th>Strain</th><th>Status</th></tr></thead><tbody>`; pigeons.forEach(p => { content += `<tr><td>${p.bandNumber}</td><td>${p.name||'-'}</td><td>${p.gender}</td><td>${formatDateForDisplay(p.hatchDate)}</td><td>${p.strain||'-'}</td><td>${p.status}</td></tr>`; }); content += '</tbody></table>'; }
-            else if (type === 'breeding') { title = 'Breeding Summary Report'; const totalEggs = breedingPairs.reduce((sum, p) => sum + parseInt(p.activatedEggs||0), 0); const totalHatched = breedingPairs.reduce((sum, p) => sum + parseInt(p.hatchedEggs||0), 0); const hatchRate = totalEggs > 0 ? ((totalHatched / totalEggs) * 100).toFixed(1) : 0; content = `<h3>Summary</h3><p>Total Pairs: ${breedingPairs.length} | Total Eggs Laid: ${totalEggs} | Total Hatched: ${totalHatched} | Hatch Rate: ${hatchRate}%</p><h4>Details</h4><table><thead><tr><th>Pair ID</th><th>Cock</th><th>Hen</th><th>Eggs Laid</th><th>Hatched</th></tr></thead><tbody>`; breedingPairs.forEach(p => { const cock = pigeons.find(b => b.id == p.cockId), hen = pigeons.find(b => b.id == p.henId); content += `<tr><td>BP-${String(p.id).slice(-4)}</td><td>${cock?cock.bandNumber:'N/A'}</td><td>${hen?hen.bandNumber:'N/A'}</td><td>${p.activatedEggs||0}</td><td>${p.hatchedEggs||0}</td></tr>`; }); content += '</tbody></table>'; }
-            else if (type === 'health') { title = 'Health Summary Report'; const recordsByPigeon = healthRecords.reduce((acc, rec) => { (acc[rec.pigeonId] = acc[rec.pigeonId]||[]).push(rec); return acc; }, {}); if (Object.keys(recordsByPigeon).length === 0) { content = '<p>No health records found.</p>'; } else { for (const pigeonId in recordsByPigeon) { const pigeon = pigeons.find(p => p.id == pigeonId); content += `<h4>Pigeon: ${pigeon?pigeon.bandNumber:'Unknown'} (${pigeon?pigeon.name||'Unnamed':''})</h4><table><thead><tr><th>Date</th><th>Type</th><th>Description</th><th>Treatment</th></tr></thead><tbody>`; recordsByPigeon[pigeonId].sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(rec => { content += `<tr><td>${formatDateForDisplay(rec.date)}</td><td>${rec.type}</td><td>${rec.description||'-'}</td><td>${rec.treatment||'-'}</td></tr>`; }); content += '</tbody></table>'; } } }
-            titleEl.textContent = title; contentDiv.innerHTML = content; openModal('report-modal');
-        }
-        
-        function updateDashboard() {
-            document.getElementById('total-pigeons-stat').textContent = pigeons.length;
-            document.getElementById('total-cocks-stat').textContent = pigeons.filter(p => p.gender === 'cock').length;
-            document.getElementById('total-hens-stat').textContent = pigeons.filter(p => p.gender === 'hen').length;
-            document.getElementById('total-pairs-stat').textContent = breedingPairs.length;
-            const currentYear = new Date().getFullYear();
-            document.getElementById('total-young-stat').textContent = pigeons.filter(p => p.hatchDate && new Date(p.hatchDate).getFullYear() === currentYear).length;
-        }
-
-        function formatDateForDisplay(isoDate) { if (!isoDate || typeof isoDate !== 'string') return '-'; const [year, month, day] = isoDate.split('-'); return `${day}/${month}/${year}`; }
-        function showMessage(message, type) { const container = document.getElementById('message-container'), div = document.createElement('div'); div.className = `message ${type}-message`; div.textContent = message; container.appendChild(div); setTimeout(() => { div.remove(); }, 3000); }
-        function setupDateCalculations() { ['first-egg-date', 'activation-days', 'hatching-days', 'ring-days'].forEach(id => { document.getElementById(id).addEventListener('input', updateCalculatedDates); }); }
-        const addDaysAndFormat = (startDate, days) => { const date = new Date(startDate + 'T00:00:00'); date.setDate(date.getDate() + parseInt(days)); return date.toISOString().split('T')[0]; };
-        function updateCalculatedDates() {
-            const firstEggDate = document.getElementById('first-egg-date').value, ids = ['activation-date', 'hatching-date', 'ring-date'];
-            if (!firstEggDate) { ids.forEach(id => document.getElementById(id).value = ''); return; }
-            document.getElementById('activation-date').value = formatDateForDisplay(addDaysAndFormat(firstEggDate, document.getElementById('activation-days').value));
-            document.getElementById('hatching-date').value = formatDateForDisplay(addDaysAndFormat(firstEggDate, document.getElementById('hatching-days').value));
-            document.getElementById('ring-date').value = formatDateForDisplay(addDaysAndFormat(firstEggDate, document.getElementById('ring-days').value));
-        }
-
-        function updateBackupPromptUI() {
-            const prompt = document.getElementById('backup-prompt');
-            prompt.classList.toggle('visible', dataHasChanged);
-        }
-
-        function exportData() {
-            const dataToExport = { pigeons, breedingPairs, healthRecords, loftInfo };
-            const dataStr = JSON.stringify(dataToExport, null, 2);
-            const blob = new Blob([dataStr], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url; a.download = `haute-voliere-pro-backup-${new Date().toISOString().slice(0, 10)}.json`;
-            document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
-            
-            dataHasChanged = false;
-            updateBackupPromptUI();
-            showMessage('Backup file is being downloaded!', 'success');
-        }
-
-        function importData(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                if (confirm('Are you sure? Importing will overwrite all current data.')) {
-                    try {
-                        const imported = JSON.parse(e.target.result);
-                        if (imported.pigeons && imported.breedingPairs && imported.healthRecords && imported.loftInfo) {
-                            pigeons = imported.pigeons; breedingPairs = imported.breedingPairs; healthRecords = imported.healthRecords; loftInfo = imported.loftInfo;
-                            
-                            localStorage.setItem('pigeons', JSON.stringify(pigeons));
-                            localStorage.setItem('breedingPairs', JSON.stringify(breedingPairs));
-                            localStorage.setItem('healthRecords', JSON.stringify(healthRecords));
-                            localStorage.setItem('loftInfo', JSON.stringify(loftInfo));
-                            
-                            dataHasChanged = false;
-                            performSortAndRedraw(); // Re-sort and draw after import
-                            updateAllTables(); 
-                            updateLoftInfoForm();
-                            updateBackupPromptUI();
-                            updateDashboard();
-                            showMessage('Data imported successfully!', 'success');
-                        } else { showMessage('Invalid or corrupted backup file.', 'error'); }
-                    } catch (err) { showMessage('Failed to parse backup file. Must be a valid JSON file.', 'error'); }
-                }
-            };
-            reader.readAsText(file);
-            event.target.value = null;
-        }
-
-        initializeApp();
-    });
-    </script>
+    <script src="app.js" defer></script>
 </body>
 </html>
